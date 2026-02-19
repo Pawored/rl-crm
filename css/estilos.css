@@ -1,0 +1,413 @@
+/**
+ * ESTILOS PERSONALIZADOS - RLCS CRM
+ * Diseño oscuro estilo esports con acentos de color.
+ * Responsive para móvil con Bootstrap 5.
+ */
+
+/* ============================================
+   VARIABLES DE COLOR
+   ============================================ */
+:root {
+    --bg-principal: #0f0f0f;
+    --bg-navbar: #1a1a2e;
+    --bg-card: #16213e;
+    --bg-card-hover: #1a2744;
+    --color-accent: #00d4ff;        /* Azul eléctrico principal */
+    --color-accent-hover: #00b8e6;
+    --color-naranja: #ff6b35;
+    --color-bronce: #cd7f32;
+    --color-oro: #ffd700;
+    --color-plata: #c0c0c0;
+    --border-color: #2d3748;
+    --text-muted-custom: #8892a0;
+}
+
+/* ============================================
+   ESTILOS GLOBALES
+   ============================================ */
+body {
+    background-color: var(--bg-principal);
+    color: #e2e8f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+
+/* Scrollbar personalizado para navegadores Webkit */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-principal);
+}
+::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+}
+
+/* ============================================
+   CLASES DE UTILIDAD
+   ============================================ */
+
+/* Color de acento (azul eléctrico) */
+.text-accent {
+    color: var(--color-accent) !important;
+}
+
+/* Color bronce (para 3er puesto) */
+.text-bronze {
+    color: var(--color-bronce) !important;
+}
+
+/* Botón con color de acento */
+.btn-accent {
+    background: linear-gradient(135deg, var(--color-accent), #0099cc);
+    border: none;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+.btn-accent:hover {
+    background: linear-gradient(135deg, var(--color-accent-hover), #007aa3);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+/* Background del acento (para paginación activa) */
+.bg-accent {
+    background-color: var(--color-accent) !important;
+    color: #000 !important;
+}
+.border-accent {
+    border-color: var(--color-accent) !important;
+}
+
+/* ============================================
+   NAVBAR
+   ============================================ */
+.bg-navbar {
+    background: linear-gradient(180deg, var(--bg-navbar), #0f0f2a) !important;
+    border-bottom: 2px solid var(--color-accent);
+    box-shadow: 0 2px 10px rgba(0, 212, 255, 0.1);
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    color: var(--color-accent) !important;
+    letter-spacing: 1px;
+}
+
+.navbar .nav-link {
+    color: #b0bec5 !important;
+    transition: color 0.3s ease, border-bottom 0.3s ease;
+    padding-bottom: 8px;
+    border-bottom: 2px solid transparent;
+    margin: 0 2px;
+}
+.navbar .nav-link:hover {
+    color: var(--color-accent) !important;
+}
+.navbar .nav-link.active {
+    color: var(--color-accent) !important;
+    border-bottom: 2px solid var(--color-accent);
+    font-weight: 600;
+}
+
+/* Barra de búsqueda */
+.navbar .form-control:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+}
+
+/* ============================================
+   PÁGINA DE LOGIN / REGISTRO
+   ============================================ */
+.bg-login {
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f0f 70%);
+}
+
+.card-login {
+    background: linear-gradient(145deg, #1e1e3a, #16213e);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+}
+
+.card-login .form-control:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+}
+
+/* ============================================
+   TARJETAS DEL DASHBOARD
+   ============================================ */
+.card-stat {
+    background: linear-gradient(145deg, #1e1e3a, var(--bg-card));
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-stat:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Bordes de colores para cada tarjeta */
+.card-stat-equipos {
+    border-top: 3px solid #17a2b8;
+}
+.card-stat-jugadores {
+    border-top: 3px solid #28a745;
+}
+.card-stat-torneos {
+    border-top: 3px solid #ffc107;
+}
+.card-stat-partidos {
+    border-top: 3px solid #dc3545;
+}
+
+/* ============================================
+   TARJETAS GENERALES
+   ============================================ */
+.card.bg-dark {
+    background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+    border-radius: 10px;
+}
+
+.card-header.bg-dark {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ============================================
+   TABLAS
+   ============================================ */
+
+/* text-muted visible sobre fondo oscuro */
+.table-dark .text-muted {
+    color: #a0aec0 !important;
+}
+.table-dark {
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--border-color);
+}
+
+.table-dark thead th {
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid var(--color-accent);
+    color: var(--color-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table-dark tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table-dark.table-hover tbody tr:hover {
+    background-color: rgba(0, 212, 255, 0.08) !important;
+}
+
+/* Filas especiales para top 3 clasificación */
+.table-row-gold {
+    background: rgba(255, 215, 0, 0.08) !important;
+    border-left: 3px solid var(--color-oro);
+}
+.table-row-silver {
+    background: rgba(192, 192, 192, 0.06) !important;
+    border-left: 3px solid var(--color-plata);
+}
+.table-row-bronze {
+    background: rgba(205, 127, 50, 0.06) !important;
+    border-left: 3px solid var(--color-bronce);
+}
+
+/* Fila resaltada (usuario actual en admin) */
+.table-row-highlight {
+    background: rgba(0, 212, 255, 0.05) !important;
+    border-left: 3px solid var(--color-accent);
+}
+
+/* ============================================
+   FORMULARIOS
+   ============================================ */
+.form-control.bg-dark,
+.form-select.bg-dark {
+    background-color: #1a1a2e !important;
+    border-color: var(--border-color);
+    color: #e2e8f0 !important;
+}
+
+.form-control.bg-dark:focus,
+.form-select.bg-dark:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+    background-color: #1e1e3a !important;
+}
+
+.form-control.bg-dark::placeholder {
+    color: #6c757d;
+}
+
+/* Switch/checkbox personalizado */
+.form-check-input:checked {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+/* ============================================
+   BADGES DE ROLES
+   ============================================ */
+/* (Los colores ya se manejan con las clases de Bootstrap
+    bg-danger, bg-warning, bg-info) */
+
+/* ============================================
+   PAGINACIÓN
+   ============================================ */
+.pagination .page-link {
+    transition: all 0.3s ease;
+}
+.pagination .page-link:hover {
+    background-color: var(--color-accent) !important;
+    color: #000 !important;
+    border-color: var(--color-accent) !important;
+}
+.pagination .page-item.disabled .page-link {
+    opacity: 0.5;
+}
+
+/* ============================================
+   ALERTAS
+   ============================================ */
+.alert-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* ============================================
+   MODALES
+   ============================================ */
+.modal-content.bg-dark {
+    background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+    border: 1px solid var(--border-color);
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+footer {
+    background: linear-gradient(180deg, #0f0f2a, var(--bg-navbar)) !important;
+    border-top: 1px solid var(--border-color) !important;
+}
+
+/* ============================================
+   LINKS
+   ============================================ */
+a.text-accent:hover {
+    color: var(--color-accent-hover) !important;
+    text-decoration: underline !important;
+}
+
+/* ============================================
+   RESPONSIVE - Ajustes para móvil
+   ============================================ */
+@media (max-width: 768px) {
+    /* Reducir padding en móvil */
+    .container-fluid {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    /* Las tarjetas del dashboard ocupan todo el ancho */
+    .card-stat .card-body {
+        padding: 0.75rem;
+    }
+    .card-stat .display-4 {
+        font-size: 2rem;
+    }
+
+    /* Tablas con scroll horizontal */
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+
+    /* Ajustar navbar para móvil */
+    .navbar .d-flex.me-3 {
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+
+    /* La barra de búsqueda ocupa todo el ancho */
+    .navbar .input-group {
+        width: 100%;
+    }
+
+    /* Info del usuario en línea separada */
+    .navbar .d-flex.align-items-center {
+        margin-top: 0.5rem;
+        justify-content: center;
+    }
+
+    /* Card del login más estrecha */
+    .card-login {
+        width: 95% !important;
+        max-width: 400px;
+    }
+
+    /* Stats del jugador en 2 columnas */
+    .col-md-2.col-sm-4 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 576px) {
+    h2 {
+        font-size: 1.4rem;
+    }
+
+    .card-login .card-body {
+        padding: 1.5rem !important;
+    }
+
+    /* Botones de acción más pequeños */
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+
+/* Efecto de entrada suave */
+.card, .alert {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Efecto glow para el botón accent */
+.btn-accent:active {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+/* Efecto hover en filas de tabla */
+.table tbody tr {
+    cursor: default;
+}
+.table tbody tr td a {
+    transition: color 0.2s ease;
+}
