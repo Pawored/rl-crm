@@ -7,7 +7,7 @@
 
 **CRM deportivo para la gestión de la Rocket League Championship Series (RLCS)**
 
-> Proyecto de fin de curso — 1º ASIR · Aplicaciones Web
+> Proyecto 1º ASIR · Aplicaciones Web / Base de datos
 
 ---
 
