@@ -34,7 +34,7 @@ if ($filtro_temporada == 0) {
 // --- Construir consulta de clasificación ---
 $where_parts = [];
 if ($filtro_temporada > 0) {
-    $where_parts[] = "vc.id_temporada = $filtro_temporada";
+    $where_parts[] = "p.id_temporada = $filtro_temporada";
 }
 if ($filtro_region > 0) {
     $where_parts[] = "e.id_region = $filtro_region";
@@ -42,12 +42,16 @@ if ($filtro_region > 0) {
 
 $where = !empty($where_parts) ? "WHERE " . implode(' AND ', $where_parts) : "";
 
-$sql = "SELECT vc.*, e.id_region, r.nombre AS region, r.siglas AS region_siglas
-        FROM vista_clasificacion vc
-        LEFT JOIN EQUIPO e ON vc.id_equipo = e.id_equipo
-        LEFT JOIN REGION r ON e.id_region = r.id_region
+$sql = "SELECT e.id_equipo, e.nombre AS equipo, e.tag,
+               r.nombre AS region, r.siglas AS region_siglas,
+               t.anio AS temporada,
+               p.puntos_regionals, p.puntos_majors, p.puntos_totales
+        FROM PUNTOS_RLCS p
+        INNER JOIN EQUIPO e ON p.id_equipo = e.id_equipo
+        INNER JOIN REGION r ON e.id_region = r.id_region
+        INNER JOIN TEMPORADA t ON p.id_temporada = t.id_temporada
         $where
-        ORDER BY vc.puntos_totales DESC";
+        ORDER BY p.puntos_totales DESC";
 $res_clasificacion = mysqli_query($conexion, $sql);
 
 require_once __DIR__ . '/../../includes/header.php';
@@ -119,24 +123,23 @@ require_once __DIR__ . '/../../includes/header.php';
                 <?php while ($fila = mysqli_fetch_assoc($res_clasificacion)): ?>
                     <?php
                     // Clases especiales para top 3
-                    $fila_class = match($posicion) {
-                        1 => 'table-row-gold',
-                        2 => 'table-row-silver',
-                        3 => 'table-row-bronze',
-                        default => ''
-                    };
-                    $pos_class = match($posicion) {
-                        1 => 'text-warning fw-bold fs-5',
-                        2 => 'text-secondary fw-bold fs-5',
-                        3 => 'text-bronze fw-bold fs-5',
-                        default => 'text-white'
-                    };
-                    $icono = match($posicion) {
-                        1 => '<i class="bi bi-trophy-fill text-warning"></i>',
-                        2 => '<i class="bi bi-trophy-fill text-secondary"></i>',
-                        3 => '<i class="bi bi-trophy-fill text-bronze"></i>',
-                        default => ''
-                    };
+                    if ($posicion === 1) {
+                        $fila_class = 'table-row-gold';
+                        $pos_class  = 'text-warning fw-bold fs-5';
+                        $icono      = '<i class="bi bi-trophy-fill text-warning"></i>';
+                    } elseif ($posicion === 2) {
+                        $fila_class = 'table-row-silver';
+                        $pos_class  = 'text-secondary fw-bold fs-5';
+                        $icono      = '<i class="bi bi-trophy-fill text-secondary"></i>';
+                    } elseif ($posicion === 3) {
+                        $fila_class = 'table-row-bronze';
+                        $pos_class  = 'text-bronze fw-bold fs-5';
+                        $icono      = '<i class="bi bi-trophy-fill text-bronze"></i>';
+                    } else {
+                        $fila_class = '';
+                        $pos_class  = 'text-white';
+                        $icono      = '';
+                    }
                     ?>
                     <tr class="<?= $fila_class ?>">
                         <td class="text-center">
@@ -145,7 +148,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         <td>
                             <a href="/RLCS/CRM/pages/equipos/detalle.php?id=<?= $fila['id_equipo'] ?>"
                                class="text-accent text-decoration-none fw-bold">
-                                <?= htmlspecialchars($fila['nombre'] ?? '') ?>
+                                <?= htmlspecialchars($fila['equipo'] ?? '') ?>
                             </a>
                         </td>
                         <td><span class="badge bg-secondary"><?= htmlspecialchars($fila['tag'] ?? '') ?></span></td>
