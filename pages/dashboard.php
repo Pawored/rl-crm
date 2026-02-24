@@ -32,9 +32,8 @@ $res_partidos = mysqli_query($conexion, $sql_partidos);
 $total_partidos = mysqli_fetch_assoc($res_partidos)['total'] ?? 0;
 
 // --- Top 5 clasificación (temporada más reciente) ---
-$sql_top5 = "SELECT vc.* FROM vista_clasificacion vc
-             INNER JOIN TEMPORADA t ON vc.id_temporada = t.id_temporada
-             ORDER BY t.anio DESC, vc.puntos_totales DESC
+$sql_top5 = "SELECT * FROM vista_clasificacion
+             ORDER BY temporada DESC, puntos_totales DESC
              LIMIT 5";
 $res_top5 = mysqli_query($conexion, $sql_top5);
 
@@ -135,17 +134,20 @@ require_once __DIR__ . '/../includes/header.php';
                                     <td>
                                         <?php
                                         // Colores especiales para top 3
-                                        $clase_pos = match($posicion) {
-                                            1 => 'text-warning fw-bold',  // Oro
-                                            2 => 'text-secondary fw-bold', // Plata
-                                            3 => 'text-bronze fw-bold',   // Bronce
-                                            default => 'text-white'
-                                        };
+                                        if ($posicion === 1) {
+                                            $clase_pos = 'text-warning fw-bold';    // Oro
+                                        } elseif ($posicion === 2) {
+                                            $clase_pos = 'text-secondary fw-bold';  // Plata
+                                        } elseif ($posicion === 3) {
+                                            $clase_pos = 'text-bronze fw-bold';     // Bronce
+                                        } else {
+                                            $clase_pos = 'text-white';
+                                        }
                                         ?>
                                         <span class="<?= $clase_pos ?>"><?= $posicion ?>º</span>
                                     </td>
                                     <td>
-                                        <strong><?= htmlspecialchars($fila['nombre'] ?? '') ?></strong>
+                                        <strong><?= htmlspecialchars($fila['equipo'] ?? '') ?></strong>
                                         <small class="text-muted">
                                             [<?= htmlspecialchars($fila['tag'] ?? '') ?>]
                                         </small>
