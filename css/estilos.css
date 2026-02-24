@@ -30,6 +30,13 @@ body {
     color: #e2e8f0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main content grows to fill remaining space, pushing footer down */
+body > .container-fluid {
+    flex: 1 0 auto;
 }
 
 /* Scrollbar personalizado para navegadores Webkit */
