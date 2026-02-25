@@ -14,22 +14,35 @@ require_once __DIR__ . '/../../includes/sesion.php';
 $sql_paises = "SELECT DISTINCT pais FROM JUGADOR WHERE pais IS NOT NULL AND pais != '' ORDER BY pais";
 $res_paises = mysqli_query($conexion, $sql_paises);
 
-// --- Filtro por país ---
-$filtro_pais = isset($_GET['pais']) ? mysqli_real_escape_string($conexion, $_GET['pais']) : '';
+// --- Obtener regiones para el filtro ---
+$sql_regiones = "SELECT id_region, nombre, siglas FROM REGION ORDER BY nombre";
+$res_regiones = mysqli_query($conexion, $sql_regiones);
+
+// --- Filtros ---
+$filtro_pais   = isset($_GET['pais'])   ? mysqli_real_escape_string($conexion, $_GET['pais'])   : '';
+$filtro_region = isset($_GET['region']) ? intval($_GET['region']) : 0;
 
 // --- Paginación ---
 $por_pagina = 10;
 $pagina = isset($_GET['pagina']) ? max(1, intval($_GET['pagina'])) : 1;
 $offset = ($pagina - 1) * $por_pagina;
 
-// --- Construir WHERE para filtro ---
-$where = "";
+// --- Construir WHERE para filtros ---
+$where_parts = [];
 if (!empty($filtro_pais)) {
-    $where = "WHERE j.pais = '$filtro_pais'";
+    $where_parts[] = "j.pais = '$filtro_pais'";
 }
+if ($filtro_region > 0) {
+    $where_parts[] = "eq.id_region = $filtro_region";
+}
+$where = !empty($where_parts) ? "WHERE " . implode(' AND ', $where_parts) : "";
 
 // --- Contar total de jugadores (para paginación) ---
-$sql_total = "SELECT COUNT(*) as total FROM JUGADOR j $where";
+$sql_total = "SELECT COUNT(DISTINCT j.id_jugador) as total
+              FROM JUGADOR j
+              LEFT JOIN ROSTER ro ON j.id_jugador = ro.id_jugador AND ro.fecha_fin IS NULL
+              LEFT JOIN EQUIPO eq ON ro.id_equipo = eq.id_equipo
+              $where";
 $res_total = mysqli_query($conexion, $sql_total);
 $total_registros = mysqli_fetch_assoc($res_total)['total'];
 $total_paginas = ceil($total_registros / $por_pagina);
@@ -71,15 +84,16 @@ require_once __DIR__ . '/../../includes/header.php';
 <!-- ========== FILTROS ========== -->
 <div class="row mb-3">
     <!-- Buscador por nickname -->
-    <div class="col-md-6 mb-2">
+    <div class="col-md-4 mb-2">
         <input type="text" id="buscadorJugadores"
                class="form-control bg-dark text-white border-secondary"
                placeholder="Buscar por nickname...">
     </div>
-    <!-- Filtro por país -->
-    <div class="col-md-6 mb-2">
-        <form method="GET" class="d-flex">
-            <select name="pais" class="form-select bg-dark text-white border-secondary me-2"
+    <!-- Filtro por país y región (mismo form para mantener ambos al hacer submit) -->
+    <div class="col-md-8 mb-2">
+        <form method="GET" class="d-flex gap-2">
+            <!-- País -->
+            <select name="pais" class="form-select bg-dark text-white border-secondary"
                     onchange="this.form.submit()">
                 <option value="">Todos los países</option>
                 <?php
@@ -89,6 +103,18 @@ require_once __DIR__ . '/../../includes/header.php';
                     <option value="<?= htmlspecialchars($pais['pais']) ?>"
                             <?= ($filtro_pais == $pais['pais']) ? 'selected' : '' ?>>
                         <?= htmlspecialchars($pais['pais']) ?>
+                    </option>
+                <?php endwhile; ?>
+            </select>
+            <!-- Región -->
+            <select name="region" class="form-select bg-dark text-white border-secondary"
+                    onchange="this.form.submit()">
+                <option value="0">Todas las regiones</option>
+                <?php while ($region = mysqli_fetch_assoc($res_regiones)): ?>
+                    <option value="<?= $region['id_region'] ?>"
+                            <?= ($filtro_region == $region['id_region']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($region['nombre']) ?>
+                        (<?= htmlspecialchars($region['siglas']) ?>)
                     </option>
                 <?php endwhile; ?>
             </select>
@@ -170,21 +196,21 @@ require_once __DIR__ . '/../../includes/header.php';
     <ul class="pagination justify-content-center">
         <li class="page-item <?= ($pagina <= 1) ? 'disabled' : '' ?>">
             <a class="page-link bg-dark text-white border-secondary"
-               href="?pagina=<?= $pagina - 1 ?>&pais=<?= urlencode($filtro_pais) ?>">
+               href="?pagina=<?= $pagina - 1 ?>&pais=<?= urlencode($filtro_pais) ?>&region=<?= $filtro_region ?>">
                 &laquo; Anterior
             </a>
         </li>
         <?php for ($i = 1; $i <= $total_paginas; $i++): ?>
             <li class="page-item <?= ($pagina == $i) ? 'active' : '' ?>">
                 <a class="page-link <?= ($pagina == $i) ? 'bg-accent border-accent' : 'bg-dark text-white border-secondary' ?>"
-                   href="?pagina=<?= $i ?>&pais=<?= urlencode($filtro_pais) ?>">
+                   href="?pagina=<?= $i ?>&pais=<?= urlencode($filtro_pais) ?>&region=<?= $filtro_region ?>">
                     <?= $i ?>
                 </a>
             </li>
         <?php endfor; ?>
         <li class="page-item <?= ($pagina >= $total_paginas) ? 'disabled' : '' ?>">
             <a class="page-link bg-dark text-white border-secondary"
-               href="?pagina=<?= $pagina + 1 ?>&pais=<?= urlencode($filtro_pais) ?>">
+               href="?pagina=<?= $pagina + 1 ?>&pais=<?= urlencode($filtro_pais) ?>&region=<?= $filtro_region ?>">
                 Siguiente &raquo;
             </a>
         </li>
