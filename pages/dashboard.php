@@ -31,9 +31,38 @@ $sql_partidos = "SELECT COUNT(*) as total FROM PARTIDO";
 $res_partidos = mysqli_query($conexion, $sql_partidos);
 $total_partidos = mysqli_fetch_assoc($res_partidos)['total'] ?? 0;
 
-// --- Top 5 clasificación (temporada más reciente) ---
-$sql_top5 = "SELECT * FROM vista_clasificacion
-             ORDER BY temporada DESC, puntos_totales DESC
+// --- Regiones para filtro del Top 5 ---
+$sql_regiones = "SELECT id_region, nombre, siglas FROM REGION ORDER BY nombre";
+$res_regiones = mysqli_query($conexion, $sql_regiones);
+
+$filtro_region = isset($_GET['region']) ? intval($_GET['region']) : 0;
+
+// --- Top 5 clasificación (temporada más reciente, filtrable por región) ---
+$sql_ultima_temp = "SELECT id_temporada FROM TEMPORADA ORDER BY anio DESC LIMIT 1";
+$res_ultima_temp = mysqli_query($conexion, $sql_ultima_temp);
+$id_temporada_top5 = ($res_ultima_temp && mysqli_num_rows($res_ultima_temp) > 0)
+    ? mysqli_fetch_assoc($res_ultima_temp)['id_temporada']
+    : 0;
+
+$where_top5_parts = [];
+if ($id_temporada_top5 > 0) {
+    $where_top5_parts[] = "p.id_temporada = $id_temporada_top5";
+}
+if ($filtro_region > 0) {
+    $where_top5_parts[] = "e.id_region = $filtro_region";
+}
+$where_top5 = !empty($where_top5_parts) ? "WHERE " . implode(' AND ', $where_top5_parts) : "";
+
+$sql_top5 = "SELECT e.id_equipo, e.nombre AS equipo, e.tag,
+                    r.nombre AS region, r.siglas AS region_siglas,
+                    t.anio AS temporada,
+                    p.puntos_regionals, p.puntos_majors, p.puntos_totales
+             FROM PUNTOS_RLCS p
+             INNER JOIN EQUIPO e ON p.id_equipo = e.id_equipo
+             INNER JOIN REGION r ON e.id_region = r.id_region
+             INNER JOIN TEMPORADA t ON p.id_temporada = t.id_temporada
+             $where_top5
+             ORDER BY p.puntos_totales DESC
              LIMIT 5";
 $res_top5 = mysqli_query($conexion, $sql_top5);
 
@@ -110,10 +139,25 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- COLUMNA IZQUIERDA: Top 5 Clasificación -->
     <div class="col-lg-6 mb-4">
         <div class="card bg-dark border-secondary">
-            <div class="card-header bg-dark border-secondary">
+            <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 text-accent">
                     <i class="bi bi-trophy"></i> Top 5 Clasificación
                 </h5>
+                <form method="GET">
+                    <select name="region"
+                            class="form-select form-select-sm bg-dark text-white border-secondary"
+                            style="min-width: 150px"
+                            onchange="this.form.submit()">
+                        <option value="0">Todas las regiones</option>
+                        <?php while ($region = mysqli_fetch_assoc($res_regiones)): ?>
+                            <option value="<?= $region['id_region'] ?>"
+                                    <?= ($filtro_region == $region['id_region']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($region['nombre']) ?>
+                                (<?= htmlspecialchars($region['siglas']) ?>)
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                </form>
             </div>
             <div class="card-body p-0">
                 <table class="table table-dark table-hover mb-0">
@@ -169,7 +213,8 @@ require_once __DIR__ . '/../includes/header.php';
                 </table>
             </div>
             <div class="card-footer bg-dark border-secondary text-end">
-                <a href="/RLCS/CRM/pages/clasificacion/index.php" class="text-accent text-decoration-none">
+                <a href="/RLCS/CRM/pages/clasificacion/index.php?region=<?= $filtro_region ?>"
+                   class="text-accent text-decoration-none">
                     Ver clasificación completa <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
