@@ -79,11 +79,73 @@ $carpeta_actual = basename(dirname($_SERVER['PHP_SELF']));
                     </a>
                 </li>
                 <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin'): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= ($carpeta_actual == 'admin') ? 'active' : '' ?>"
-                       href="/RLCS/CRM/pages/admin/usuarios.php">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle <?= ($carpeta_actual == 'admin') ? 'active' : '' ?>"
+                       href="#" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-shield-lock"></i> Admin
                     </a>
+                    <ul class="dropdown-menu dropdown-menu-dark bg-card border-secondary">
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/index.php">
+                                <i class="bi bi-speedometer2"></i> Panel Admin
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider border-secondary"></li>
+                        <li><span class="dropdown-header text-muted small">DATOS</span></li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/temporadas/index.php">
+                                <i class="bi bi-calendar3"></i> Temporadas
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/regiones/index.php">
+                                <i class="bi bi-globe"></i> Regiones
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/torneos/index.php">
+                                <i class="bi bi-award"></i> Torneos
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/partidos/index.php">
+                                <i class="bi bi-joystick"></i> Partidos
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider border-secondary"></li>
+                        <li><span class="dropdown-header text-muted small">GESTIÓN</span></li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/participacion/gestionar.php">
+                                <i class="bi bi-diagram-3"></i> Participación
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/puntos/gestionar.php">
+                                <i class="bi bi-bar-chart"></i> Puntos RLCS
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/roster/gestionar.php">
+                                <i class="bi bi-people"></i> Roster
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/estadisticas/entrada.php">
+                                <i class="bi bi-graph-up"></i> Estadísticas
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/bracket/gestionar.php">
+                                <i class="bi bi-trophy"></i> Bracket
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider border-secondary"></li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/usuarios.php">
+                                <i class="bi bi-person-gear"></i> Usuarios
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <?php endif; ?>
             </ul>

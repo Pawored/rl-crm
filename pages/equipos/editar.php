@@ -55,8 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                            nombre = '$nombre',
                            tag = '$tag',
                            id_region = " . ($id_region > 0 ? $id_region : 'NULL') . ",
-                           activo = $activo,
-                           fecha_modificacion = NOW()
+                           activo = $activo
                            WHERE id_equipo = $id";
 
             if (mysqli_query($conexion, $sql_update)) {
@@ -69,10 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             // --- INSERT: crear nuevo equipo ---
-            $sql_insert = "INSERT INTO EQUIPO (nombre, tag, id_region, activo, fecha_creacion)
+            $sql_insert = "INSERT INTO EQUIPO (nombre, tag, id_region, activo)
                            VALUES ('$nombre', '$tag',
                            " . ($id_region > 0 ? $id_region : 'NULL') . ",
-                           $activo, NOW())";
+                           $activo)";
 
             if (mysqli_query($conexion, $sql_insert)) {
                 $nuevo_id = mysqli_insert_id($conexion);
