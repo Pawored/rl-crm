@@ -157,6 +157,18 @@ $carpeta_actual = basename(dirname($_SERVER['PHP_SELF']));
                                 <i class="bi bi-person-gear"></i> Usuarios
                             </a>
                         </li>
+                        <li><hr class="dropdown-divider border-secondary"></li>
+                        <li><span class="dropdown-header text-muted small">HERRAMIENTAS</span></li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/importar/index.php">
+                                <i class="bi bi-upload"></i> Importar CSV/JSON
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/RLCS/CRM/pages/admin/auditoria/index.php">
+                                <i class="bi bi-journal-text"></i> Auditoría
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 <?php endif; ?>

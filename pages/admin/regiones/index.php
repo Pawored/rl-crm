@@ -18,12 +18,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     exit();
 }
 
+$por_pagina = 15;
+$pagina     = max(1, intval($_GET['pagina'] ?? 1));
+$offset     = ($pagina - 1) * $por_pagina;
+
+$total_reg    = mysqli_fetch_row(mysqli_query($conexion, "SELECT COUNT(*) FROM REGION"))[0];
+$total_paginas = max(1, ceil($total_reg / $por_pagina));
+
 $regiones = mysqli_query($conexion,
     "SELECT r.*, COUNT(e.id_equipo) AS num_equipos
      FROM REGION r
      LEFT JOIN EQUIPO e ON e.id_region = r.id_region
      GROUP BY r.id_region
-     ORDER BY r.nombre"
+     ORDER BY r.nombre
+     LIMIT $offset, $por_pagina"
 );
 
 require_once __DIR__ . '/../../../includes/header.php';
@@ -111,5 +119,26 @@ require_once __DIR__ . '/../../../includes/header.php';
         </tbody>
     </table>
 </div>
+
+<?php if ($total_paginas > 1): ?>
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+        <li class="page-item <?= $pagina <= 1 ? 'disabled' : '' ?>">
+            <a class="page-link bg-dark text-white border-secondary"
+               href="?pagina=<?= $pagina-1 ?>">&laquo;</a>
+        </li>
+        <?php for ($i = max(1,$pagina-2); $i <= min($total_paginas,$pagina+2); $i++): ?>
+        <li class="page-item <?= $i===$pagina?'active':'' ?>">
+            <a class="page-link <?= $i===$pagina?'bg-accent border-accent':'bg-dark text-white border-secondary' ?>"
+               href="?pagina=<?= $i ?>"><?= $i ?></a>
+        </li>
+        <?php endfor; ?>
+        <li class="page-item <?= $pagina>=$total_paginas?'disabled':'' ?>">
+            <a class="page-link bg-dark text-white border-secondary"
+               href="?pagina=<?= $pagina+1 ?>">&raquo;</a>
+        </li>
+    </ul>
+</nav>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/../../../includes/footer.php'; ?>

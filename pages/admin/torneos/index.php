@@ -19,10 +19,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'elimi
 $filtro_temp = intval($_GET['temporada'] ?? 0);
 $filtro_tipo = mysqli_real_escape_string($conexion, $_GET['tipo'] ?? '');
 
+$por_pagina = 15;
+$pagina     = max(1, intval($_GET['pagina'] ?? 1));
+$offset     = ($pagina - 1) * $por_pagina;
+
 $where = [];
 if ($filtro_temp > 0) $where[] = "t.id_temporada = $filtro_temp";
 if (!empty($filtro_tipo)) $where[] = "t.tipo = '$filtro_tipo'";
 $where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+$total_torneos = mysqli_fetch_row(mysqli_query($conexion,
+    "SELECT COUNT(*) FROM TORNEO t $where_sql"))[0];
+$total_paginas = max(1, ceil($total_torneos / $por_pagina));
 
 $torneos = mysqli_query($conexion,
     "SELECT t.*, temp.anio,
@@ -34,7 +42,8 @@ $torneos = mysqli_query($conexion,
      LEFT JOIN PARTIDO par ON par.id_torneo = t.id_torneo
      $where_sql
      GROUP BY t.id_torneo
-     ORDER BY temp.anio DESC, t.nombre"
+     ORDER BY temp.anio DESC, t.nombre
+     LIMIT $offset, $por_pagina"
 );
 
 $temporadas = mysqli_query($conexion, "SELECT id_temporada, anio FROM TEMPORADA ORDER BY anio DESC");
@@ -175,5 +184,26 @@ require_once __DIR__ . '/../../../includes/header.php';
         </tbody>
     </table>
 </div>
+
+<?php if ($total_paginas > 1): ?>
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+        <li class="page-item <?= $pagina <= 1 ? 'disabled' : '' ?>">
+            <a class="page-link bg-dark text-white border-secondary"
+               href="?pagina=<?= $pagina-1 ?>&temporada=<?= $filtro_temp ?>&tipo=<?= urlencode($filtro_tipo) ?>">&laquo;</a>
+        </li>
+        <?php for ($i = max(1,$pagina-2); $i <= min($total_paginas,$pagina+2); $i++): ?>
+        <li class="page-item <?= $i===$pagina?'active':'' ?>">
+            <a class="page-link <?= $i===$pagina?'bg-accent border-accent':'bg-dark text-white border-secondary' ?>"
+               href="?pagina=<?= $i ?>&temporada=<?= $filtro_temp ?>&tipo=<?= urlencode($filtro_tipo) ?>"><?= $i ?></a>
+        </li>
+        <?php endfor; ?>
+        <li class="page-item <?= $pagina>=$total_paginas?'disabled':'' ?>">
+            <a class="page-link bg-dark text-white border-secondary"
+               href="?pagina=<?= $pagina+1 ?>&temporada=<?= $filtro_temp ?>&tipo=<?= urlencode($filtro_tipo) ?>">&raquo;</a>
+        </li>
+    </ul>
+</nav>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/../../../includes/footer.php'; ?>

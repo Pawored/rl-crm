@@ -20,6 +20,35 @@ foreach ($queries as $key => $sql) {
     $stats[$key] = mysqli_fetch_row($res)[0];
 }
 
+// --- Chart 1: Partidos por mes (últimos 6 meses) ---
+$chart_meses = $chart_partidos = [];
+$res_meses = mysqli_query($conexion,
+    "SELECT DATE_FORMAT(fecha_hora, '%Y-%m') AS mes, COUNT(*) AS total
+     FROM PARTIDO
+     WHERE fecha_hora >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+     GROUP BY mes ORDER BY mes ASC"
+);
+while ($row = mysqli_fetch_assoc($res_meses)) {
+    $chart_meses[]   = $row['mes'];
+    $chart_partidos[] = (int)$row['total'];
+}
+
+// --- Chart 2: Top 10 equipos por puntos en la última temporada ---
+$chart_equipos_names = $chart_equipos_pts = [];
+$res_top = mysqli_query($conexion,
+    "SELECT e.nombre, pr.puntos_totales
+     FROM PUNTOS_RLCS pr
+     JOIN EQUIPO e ON e.id_equipo = pr.id_equipo
+     JOIN TEMPORADA t ON t.id_temporada = pr.id_temporada
+     WHERE t.anio = (SELECT MAX(anio) FROM TEMPORADA)
+     ORDER BY pr.puntos_totales DESC
+     LIMIT 10"
+);
+while ($row = mysqli_fetch_assoc($res_top)) {
+    $chart_equipos_names[] = $row['nombre'];
+    $chart_equipos_pts[]   = (int)$row['puntos_totales'];
+}
+
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -53,6 +82,44 @@ require_once __DIR__ . '/../../includes/header.php';
     <?php endforeach; ?>
 </div>
 
+<!-- ========== CHARTS ========== -->
+<div class="row g-4 mb-5">
+    <!-- Chart: Partidos por mes -->
+    <div class="col-lg-6">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-header bg-dark border-secondary">
+                <h6 class="mb-0 text-accent">
+                    <i class="bi bi-calendar-week"></i> Partidos por Mes (últimos 6 meses)
+                </h6>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($chart_meses)): ?>
+                <canvas id="chartMeses" height="160"></canvas>
+                <?php else: ?>
+                <p class="text-muted text-center pt-4">Sin partidos registrados.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    <!-- Chart: Top equipos por puntos -->
+    <div class="col-lg-6">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-header bg-dark border-secondary">
+                <h6 class="mb-0 text-accent">
+                    <i class="bi bi-bar-chart-fill"></i> Top Equipos — Puntos Última Temporada
+                </h6>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($chart_equipos_names)): ?>
+                <canvas id="chartEquipos" height="160"></canvas>
+                <?php else: ?>
+                <p class="text-muted text-center pt-4">Sin datos de puntos.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Accesos rápidos -->
 <h5 class="text-white mb-3"><i class="bi bi-grid"></i> Módulos</h5>
 <div class="row g-3">
@@ -70,6 +137,8 @@ require_once __DIR__ . '/../../includes/header.php';
         ['url' => '/RLCS/CRM/pages/admin/usuarios.php',            'icon' => 'person-gear',   'title' => 'Usuarios',      'desc' => 'Roles y acceso al sistema'],
         ['url' => '/RLCS/CRM/pages/equipos/editar.php',            'icon' => 'people-fill',   'title' => 'Nuevo Equipo',  'desc' => 'Crear un equipo'],
         ['url' => '/RLCS/CRM/pages/jugadores/editar.php',          'icon' => 'person-badge',  'title' => 'Nuevo Jugador', 'desc' => 'Crear un jugador'],
+        ['url' => '/RLCS/CRM/pages/admin/importar/index.php',      'icon' => 'upload',        'title' => 'Importar',      'desc' => 'Carga masiva CSV/JSON'],
+        ['url' => '/RLCS/CRM/pages/admin/auditoria/index.php',     'icon' => 'journal-text',  'title' => 'Auditoría',     'desc' => 'Registro de cambios'],
     ];
     foreach ($modulos as $m): ?>
     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
@@ -91,5 +160,64 @@ require_once __DIR__ . '/../../includes/header.php';
 .admin-module-card { transition: border-color .2s, transform .2s; }
 .admin-module-card:hover { border-color: var(--color-accent) !important; transform: translateY(-2px); }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+<?php if (!empty($chart_meses)): ?>
+new Chart(document.getElementById('chartMeses'), {
+    type: 'line',
+    data: {
+        labels: <?= json_encode($chart_meses) ?>,
+        datasets: [{
+            label: 'Partidos',
+            data: <?= json_encode($chart_partidos) ?>,
+            borderColor: '#00d4ff',
+            backgroundColor: 'rgba(0,212,255,0.15)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#adb5bd' } } },
+        scales: {
+            x: { ticks: { color: '#adb5bd' }, grid: { color: 'rgba(255,255,255,0.07)' } },
+            y: { beginAtZero: true, ticks: { color: '#adb5bd', stepSize: 1 },
+                 grid: { color: 'rgba(255,255,255,0.07)' } }
+        }
+    }
+});
+<?php endif; ?>
+
+<?php if (!empty($chart_equipos_names)): ?>
+new Chart(document.getElementById('chartEquipos'), {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode($chart_equipos_names) ?>,
+        datasets: [{
+            label: 'Puntos totales',
+            data: <?= json_encode($chart_equipos_pts) ?>,
+            backgroundColor: [
+                'rgba(0,212,255,0.8)','rgba(13,110,253,0.8)','rgba(25,135,84,0.8)',
+                'rgba(255,193,7,0.8)','rgba(220,53,69,0.8)','rgba(102,16,242,0.8)',
+                'rgba(0,212,255,0.6)','rgba(13,110,253,0.6)','rgba(25,135,84,0.6)',
+                'rgba(255,193,7,0.6)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { color: '#adb5bd' }, grid: { color: 'rgba(255,255,255,0.07)' } },
+            y: { ticks: { color: '#adb5bd' }, grid: { color: 'rgba(255,255,255,0.07)' } }
+        }
+    }
+});
+<?php endif; ?>
+</script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
