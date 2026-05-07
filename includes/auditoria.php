@@ -1,19 +1,22 @@
 <?php
 /**
  * AUDITORIA — helper para registrar cambios en el CRM
- * Falla silenciosamente si la tabla no existe aún.
+ * Usa prepared statements. Falla silenciosamente si la tabla no existe aún.
  */
 
 function registrarAuditoria($conexion, $accion, $tabla, $id_registro = null, $detalle = '') {
-    $usuario    = mysqli_real_escape_string($conexion, $_SESSION['nombre'] ?? 'sistema');
+    $usuario    = $_SESSION['nombre'] ?? 'sistema';
     $id_usuario = intval($_SESSION['id_usuario'] ?? 0);
-    $accion     = mysqli_real_escape_string($conexion, $accion);
-    $tabla      = mysqli_real_escape_string($conexion, $tabla);
-    $id_reg_sql = ($id_registro !== null) ? intval($id_registro) : 'NULL';
-    $detalle    = mysqli_real_escape_string($conexion, substr($detalle, 0, 1000));
+    $accion     = substr($accion, 0, 50);
+    $tabla      = substr($tabla, 0, 50);
+    $detalle    = substr($detalle, 0, 1000);
+    $id_reg     = ($id_registro !== null) ? intval($id_registro) : null;
 
-    mysqli_query($conexion,
+    $stmt = mysqli_prepare($conexion,
         "INSERT INTO AUDITORIA (usuario, id_usuario, accion, tabla, id_registro, detalle)
-         VALUES ('$usuario', $id_usuario, '$accion', '$tabla', $id_reg_sql, '$detalle')"
-    );
+         VALUES (?, ?, ?, ?, ?, ?)");
+    if (!$stmt) return;
+    mysqli_stmt_bind_param($stmt, 'sissis',
+        $usuario, $id_usuario, $accion, $tabla, $id_reg, $detalle);
+    mysqli_stmt_execute($stmt);
 }
