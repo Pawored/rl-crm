@@ -55,6 +55,17 @@ $sql_puntos = "SELECT pr.*, te.anio
                ORDER BY te.anio DESC";
 $res_puntos = mysqli_query($conexion, $sql_puntos);
 
+// Recoger puntos en array para reutilizar en chart + tabla
+$puntos_arr = [];
+while ($p = mysqli_fetch_assoc($res_puntos)) {
+    $puntos_arr[] = $p;
+}
+// Preparar datos para el chart (orden cronológico ASC)
+$chart_anios      = array_column(array_reverse($puntos_arr), 'anio');
+$chart_regionals  = array_column(array_reverse($puntos_arr), 'puntos_regionals');
+$chart_majors     = array_column(array_reverse($puntos_arr), 'puntos_majors');
+$chart_totales    = array_column(array_reverse($puntos_arr), 'puntos_totales');
+
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -171,15 +182,15 @@ require_once __DIR__ . '/../../includes/header.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($res_puntos && mysqli_num_rows($res_puntos) > 0): ?>
-                            <?php while ($punto = mysqli_fetch_assoc($res_puntos)): ?>
+                        <?php if (!empty($puntos_arr)): ?>
+                            <?php foreach ($puntos_arr as $punto): ?>
                                 <tr>
                                     <td><?= htmlspecialchars($punto['anio']) ?></td>
                                     <td><?= $punto['puntos_regionals'] ?></td>
                                     <td><?= $punto['puntos_majors'] ?></td>
                                     <td><strong class="text-accent"><?= $punto['puntos_totales'] ?></strong></td>
                                 </tr>
-                            <?php endwhile; ?>
+                            <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
                                 <td colspan="4" class="text-center text-muted py-3">
@@ -193,6 +204,20 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- ========== GRÁFICA DE PUNTOS POR TEMPORADA ========== -->
+<?php if (!empty($puntos_arr)): ?>
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-header bg-dark border-secondary">
+        <h5 class="mb-0 text-accent">
+            <i class="bi bi-bar-chart-fill"></i> Evolución de Puntos por Temporada
+        </h5>
+    </div>
+    <div class="card-body">
+        <canvas id="chartPuntos" height="80"></canvas>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- ========== HISTORIAL DE TORNEOS ========== -->
 <div class="card bg-dark border-secondary mb-4">
@@ -246,4 +271,64 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
+<?php if (!empty($puntos_arr)): ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    new Chart(document.getElementById('chartPuntos'), {
+        data: {
+            labels: <?= json_encode($chart_anios) ?>,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Regionals',
+                    data: <?= json_encode($chart_regionals) ?>,
+                    backgroundColor: 'rgba(0,212,255,0.7)',
+                    borderColor: '#00d4ff',
+                    borderWidth: 1
+                },
+                {
+                    type: 'bar',
+                    label: 'Majors',
+                    data: <?= json_encode($chart_majors) ?>,
+                    backgroundColor: 'rgba(13,110,253,0.7)',
+                    borderColor: '#0d6efd',
+                    borderWidth: 1
+                },
+                {
+                    type: 'line',
+                    label: 'Total',
+                    data: <?= json_encode($chart_totales) ?>,
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255,193,7,0.15)',
+                    tension: 0.3,
+                    fill: false,
+                    pointRadius: 5,
+                    borderWidth: 2,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#adb5bd' } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255,255,255,0.07)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    stacked: false,
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255,255,255,0.07)' }
+                }
+            }
+        }
+    });
+})();
+</script>
+<?php endif; ?>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

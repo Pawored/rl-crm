@@ -44,6 +44,33 @@ $sql = "SELECT e.id_equipo, e.nombre, e.tag, e.activo,
         LIMIT $offset, $por_pagina";
 $res_equipos = mysqli_query($conexion, $sql);
 
+// Recoger equipos en array para poder construir forma reciente
+$equipos_arr = [];
+if ($res_equipos) {
+    while ($eq = mysqli_fetch_assoc($res_equipos)) {
+        $equipos_arr[] = $eq;
+    }
+}
+
+// Construir forma reciente (últimos 5 resultados) para los equipos de esta página
+$forma_por_equipo = [];
+if (!empty($equipos_arr)) {
+    $ids_pagina = implode(',', array_column($equipos_arr, 'id_equipo'));
+    $sql_forma = "SELECT id_equipo1, id_equipo2, id_ganador
+                  FROM PARTIDO
+                  WHERE (id_equipo1 IN ($ids_pagina) OR id_equipo2 IN ($ids_pagina))
+                    AND id_ganador IS NOT NULL
+                  ORDER BY fecha_hora DESC
+                  LIMIT 100";
+    $res_forma = mysqli_query($conexion, $sql_forma);
+    while ($m = mysqli_fetch_assoc($res_forma)) {
+        foreach ([$m['id_equipo1'], $m['id_equipo2']] as $eid) {
+            if (isset($forma_por_equipo[$eid]) && count($forma_por_equipo[$eid]) >= 5) continue;
+            $forma_por_equipo[$eid][] = ($m['id_ganador'] == $eid) ? 'W' : 'L';
+        }
+    }
+}
+
 // --- Procesar eliminación (solo admin) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminar_id']) && tieneRol('admin')) {
     $id_eliminar = intval($_POST['eliminar_id']);
@@ -111,12 +138,13 @@ require_once __DIR__ . '/../../includes/header.php';
                 <th>Tag</th>
                 <th>Región</th>
                 <th>Estado</th>
+                <th>Forma</th>
                 <th class="text-center">Acciones</th>
             </tr>
         </thead>
         <tbody>
-            <?php if ($res_equipos && mysqli_num_rows($res_equipos) > 0): ?>
-                <?php while ($equipo = mysqli_fetch_assoc($res_equipos)): ?>
+            <?php if (!empty($equipos_arr)): ?>
+                <?php foreach ($equipos_arr as $equipo): ?>
                     <tr>
                         <td>
                             <strong><?= htmlspecialchars($equipo['nombre']) ?></strong>
@@ -133,6 +161,21 @@ require_once __DIR__ . '/../../includes/header.php';
                             <?php else: ?>
                                 <span class="badge bg-danger">Inactivo</span>
                             <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php
+                            $forma = $forma_por_equipo[$equipo['id_equipo']] ?? [];
+                            // Invertir para mostrar más reciente a la derecha
+                            $forma = array_reverse($forma);
+                            // Rellenar con placeholders a la izquierda hasta 5
+                            while (count($forma) < 5) array_unshift($forma, '?');
+                            foreach ($forma as $r):
+                                $cls = $r === 'W' ? 'bg-success' : ($r === 'L' ? 'bg-danger' : 'bg-secondary');
+                                $lbl = $r === '?' ? '·' : $r;
+                            ?>
+                                <span class="badge rounded-pill <?= $cls ?>"
+                                      style="width:1.8rem;font-size:.65rem"><?= $lbl ?></span>
+                            <?php endforeach; ?>
                         </td>
                         <td class="text-center">
                             <!-- Botón ver (todos los roles) -->
@@ -189,10 +232,10 @@ require_once __DIR__ . '/../../includes/header.php';
                             <?php endif; ?>
                         </td>
                     </tr>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">
+                    <td colspan="6" class="text-center text-muted py-4">
                         <i class="bi bi-info-circle"></i> No se encontraron equipos.
                     </td>
                 </tr>

@@ -54,9 +54,13 @@ $sql_partidos = "SELECT p.id_partido, p.fecha_hora, p.formato,
                  ORDER BY p.fecha_hora ASC";
 $res_partidos = mysqli_query($conexion, $sql_partidos);
 
-// --- Info del bracket ---
+// --- Info del bracket (agrupar por ronda) ---
 $sql_bracket = "SELECT * FROM BRACKET WHERE id_torneo = $id ORDER BY ronda ASC, fase ASC";
 $res_bracket = mysqli_query($conexion, $sql_bracket);
+$bracket_por_ronda = [];
+while ($b = mysqli_fetch_assoc($res_bracket)) {
+    $bracket_por_ronda[$b['ronda']][] = $b;
+}
 
 require_once __DIR__ . '/../../includes/header.php';
 ?>
@@ -214,34 +218,59 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
-<!-- ========== INFO DEL BRACKET ========== -->
-<?php if ($res_bracket && mysqli_num_rows($res_bracket) > 0): ?>
+<!-- ========== BRACKET VISUAL ========== -->
+<?php if (!empty($bracket_por_ronda)): ?>
 <div class="card bg-dark border-secondary mb-4">
-    <div class="card-header bg-dark border-secondary">
+    <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
         <h5 class="mb-0 text-accent">
             <i class="bi bi-diagram-3"></i> Estructura del Bracket
         </h5>
+        <small class="text-muted"><?= count($bracket_por_ronda) ?> ronda(s)</small>
     </div>
-    <div class="card-body p-0">
-        <table class="table table-dark table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>Tipo</th>
-                    <th>Ronda</th>
-                    <th>Fase</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($b = mysqli_fetch_assoc($res_bracket)): ?>
-                    <tr>
-                        <td><span class="badge bg-info"><?= htmlspecialchars($b['tipo_bracket'] ?? '') ?></span></td>
-                        <td><?= htmlspecialchars($b['ronda'] ?? '') ?></td>
-                        <td><?= htmlspecialchars($b['fase'] ?? '') ?></td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+    <div class="card-body">
+        <div class="bracket-wrapper d-flex gap-3 overflow-auto pb-2">
+            <?php foreach ($bracket_por_ronda as $ronda => $entradas): ?>
+            <div class="bracket-round flex-shrink-0" style="min-width:180px">
+                <div class="text-center mb-2">
+                    <span class="badge bg-secondary px-3 py-1">Ronda <?= htmlspecialchars($ronda) ?></span>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <?php foreach ($entradas as $entrada): ?>
+                    <div class="bracket-match border rounded p-2"
+                         style="border-color:rgba(0,212,255,0.3)!important;background:#12122a">
+                        <div class="mb-1">
+                            <?php
+                            $tipo = strtolower($entrada['tipo_bracket'] ?? '');
+                            $badge = match($tipo) {
+                                'winners', 'winner' => 'bg-success',
+                                'losers', 'loser'   => 'bg-danger',
+                                'grand_final', 'grand final' => 'bg-warning text-dark',
+                                default => 'bg-info'
+                            };
+                            ?>
+                            <span class="badge <?= $badge ?> text-uppercase" style="font-size:.6rem">
+                                <?= htmlspecialchars($entrada['tipo_bracket'] ?? 'N/A') ?>
+                            </span>
+                        </div>
+                        <div class="text-white fw-semibold" style="font-size:.85rem">
+                            <?= htmlspecialchars($entrada['fase'] ?? 'N/A') ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php if (!array_key_last($bracket_por_ronda) === $ronda): ?>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-chevron-right text-muted fs-4"></i>
+            </div>
+            <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
     </div>
+</div>
+<?php else: ?>
+<div class="alert alert-secondary mb-4">
+    <i class="bi bi-diagram-3"></i> Sin estructura de bracket registrada para este torneo.
 </div>
 <?php endif; ?>
 

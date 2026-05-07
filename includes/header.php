@@ -78,6 +78,18 @@ $carpeta_actual = basename(dirname($_SERVER['PHP_SELF']));
                         <i class="bi bi-award"></i> Torneos
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($pagina_actual == 'comparar.php') ? 'active' : '' ?>"
+                       href="/RLCS/CRM/pages/comparar.php">
+                        <i class="bi bi-arrows-angle-contract"></i> Comparar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($pagina_actual == 'agentes_libres.php') ? 'active' : '' ?>"
+                       href="/RLCS/CRM/pages/agentes_libres.php">
+                        <i class="bi bi-person-x"></i> Agentes Libres
+                    </a>
+                </li>
                 <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin'): ?>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle <?= ($carpeta_actual == 'admin') ? 'active' : '' ?>"
