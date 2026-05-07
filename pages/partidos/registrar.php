@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/../../config/conexion.php';
 require_once __DIR__ . '/../../includes/sesion.php';
+require_once __DIR__ . '/../../includes/db.php';
 
 // --- Solo admin y editor ---
 requiereRol(['admin', 'editor']);
@@ -16,33 +17,30 @@ requiereRol(['admin', 'editor']);
 // === LÓGICA PHP ===
 
 $error = '';
-$exito_juego = '';
+
+// Partido seleccionado para la sección de juegos (GET param)
+$id_partido_activo = intval($_GET['partido'] ?? $_GET['id'] ?? 0);
 
 // --- Obtener partidos sin ganador (pendientes) ---
-$sql_pendientes = "SELECT p.id_partido, p.fecha_hora, p.formato,
-                          e1.nombre AS equipo1, e1.tag AS tag1, e1.id_equipo AS id_eq1,
-                          e2.nombre AS equipo2, e2.tag AS tag2, e2.id_equipo AS id_eq2
-                   FROM PARTIDO p
-                   INNER JOIN EQUIPO e1 ON p.id_equipo1 = e1.id_equipo
-                   INNER JOIN EQUIPO e2 ON p.id_equipo2 = e2.id_equipo
-                   WHERE p.id_ganador IS NULL
-                   ORDER BY p.fecha_hora DESC";
-$res_pendientes = mysqli_query($conexion, $sql_pendientes);
-
-// --- Si viene un ?id=X, preseleccionar ese partido ---
-$id_preseleccionado = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$res_pendientes = mysqli_query($conexion,
+    "SELECT p.id_partido, p.fecha_hora, p.formato,
+            e1.nombre AS equipo1, e1.tag AS tag1, e1.id_equipo AS id_eq1,
+            e2.nombre AS equipo2, e2.tag AS tag2, e2.id_equipo AS id_eq2
+     FROM PARTIDO p
+     INNER JOIN EQUIPO e1 ON p.id_equipo1 = e1.id_equipo
+     INNER JOIN EQUIPO e2 ON p.id_equipo2 = e2.id_equipo
+     WHERE p.id_ganador IS NULL
+     ORDER BY p.fecha_hora DESC");
 
 // --- Procesar registro de resultado ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'resultado') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'resultado') {
     $id_partido = intval($_POST['id_partido'] ?? 0);
     $id_ganador = intval($_POST['id_ganador'] ?? 0);
 
     if ($id_partido <= 0 || $id_ganador <= 0) {
         $error = "Debes seleccionar un partido y un ganador.";
     } else {
-        // Llamar al procedimiento almacenado
-        $sql_call = "CALL registrar_resultado_partido($id_partido, $id_ganador)";
-        if (mysqli_query($conexion, $sql_call)) {
+        if (mysqli_query($conexion, "CALL registrar_resultado_partido($id_partido, $id_ganador)")) {
             $_SESSION['mensaje_exito'] = "Resultado registrado correctamente.";
             header("Location: /RLCS/CRM/pages/partidos/index.php");
             exit();
@@ -52,35 +50,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
-// --- Procesar añadir juego ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'juego') {
+// --- Procesar añadir juego (prepared statement + PRG) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'juego') {
     $id_partido_juego = intval($_POST['id_partido_juego'] ?? 0);
-    $numero_juego     = intval($_POST['numero_juego'] ?? 1);
-    $goles_eq1        = intval($_POST['goles_equipo1'] ?? 0);
-    $goles_eq2        = intval($_POST['goles_equipo2'] ?? 0);
-    $duracion         = intval($_POST['duracion'] ?? 300);
+    $numero_juego     = intval($_POST['numero_juego']     ?? 1);
+    $goles_eq1        = intval($_POST['goles_equipo1']    ?? 0);
+    $goles_eq2        = intval($_POST['goles_equipo2']    ?? 0);
+    $duracion         = intval($_POST['duracion']         ?? 300);
 
     if ($id_partido_juego <= 0) {
         $error = "Debes seleccionar un partido para añadir el juego.";
     } else {
-        $sql_juego = "INSERT INTO JUEGO (id_partido, numero_juego, goles_equipo1, goles_equipo2, duracion_segundos)
-                      VALUES ($id_partido_juego, $numero_juego, $goles_eq1, $goles_eq2, $duracion)";
-        if (mysqli_query($conexion, $sql_juego)) {
-            $exito_juego = "Juego #$numero_juego añadido correctamente.";
+        $stmt = db_run($conexion,
+            "INSERT INTO JUEGO (id_partido, numero_juego, goles_equipo1, goles_equipo2, duracion_segundos)
+             VALUES (?, ?, ?, ?, ?)",
+            "iiiii", $id_partido_juego, $numero_juego, $goles_eq1, $goles_eq2, $duracion
+        );
+        if ($stmt && $stmt->affected_rows > 0) {
+            $_SESSION['mensaje_exito'] = "Juego #$numero_juego añadido: {$goles_eq1}–{$goles_eq2}.";
+            header("Location: /RLCS/CRM/pages/partidos/registrar.php?partido=$id_partido_juego");
+            exit();
         } else {
             $error = "Error al añadir juego: " . mysqli_error($conexion);
+            $id_partido_activo = $id_partido_juego;
         }
     }
 }
 
-// --- Obtener todos los partidos para la sección de juegos ---
-$sql_todos = "SELECT p.id_partido, p.fecha_hora,
-                     e1.tag AS tag1, e2.tag AS tag2
-              FROM PARTIDO p
-              INNER JOIN EQUIPO e1 ON p.id_equipo1 = e1.id_equipo
-              INNER JOIN EQUIPO e2 ON p.id_equipo2 = e2.id_equipo
-              ORDER BY p.fecha_hora DESC";
-$res_todos = mysqli_query($conexion, $sql_todos);
+// --- Todos los partidos para el selector de juegos ---
+$res_todos = mysqli_query($conexion,
+    "SELECT p.id_partido, p.fecha_hora,
+            e1.tag AS tag1, e2.tag AS tag2
+     FROM PARTIDO p
+     INNER JOIN EQUIPO e1 ON p.id_equipo1 = e1.id_equipo
+     INNER JOIN EQUIPO e2 ON p.id_equipo2 = e2.id_equipo
+     ORDER BY p.fecha_hora DESC");
+
+// --- Juegos existentes del partido activo ---
+$partido_activo    = null;
+$juegos_existentes = [];
+$siguiente_juego   = 1;
+if ($id_partido_activo > 0) {
+    $partido_activo = db_fetch_one($conexion,
+        "SELECT p.id_partido, p.formato,
+                e1.nombre AS equipo1, e1.tag AS tag1,
+                e2.nombre AS equipo2, e2.tag AS tag2
+         FROM PARTIDO p
+         INNER JOIN EQUIPO e1 ON p.id_equipo1 = e1.id_equipo
+         INNER JOIN EQUIPO e2 ON p.id_equipo2 = e2.id_equipo
+         WHERE p.id_partido = ?",
+        "i", $id_partido_activo
+    );
+    if ($partido_activo) {
+        $juegos_existentes = db_fetch_all($conexion,
+            "SELECT * FROM JUEGO WHERE id_partido = ? ORDER BY numero_juego ASC",
+            "i", $id_partido_activo
+        );
+        $siguiente_juego = count($juegos_existentes) + 1;
+    }
+}
 
 require_once __DIR__ . '/../../includes/header.php';
 ?>
@@ -160,72 +188,152 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
-<!-- ========== SECCIÓN 2: AÑADIR JUEGOS ========== -->
-<div class="card bg-dark border-secondary mb-4">
+<!-- ========== SECCIÓN 2: JUEGOS ========== -->
+<div class="card bg-dark border-secondary mb-4" id="juegos">
     <div class="card-header bg-dark border-secondary">
         <h5 class="mb-0 text-accent">
-            <i class="bi bi-controller"></i> Añadir Juego a un Partido
+            <i class="bi bi-controller"></i> Registrar Juegos de un Partido
         </h5>
     </div>
     <div class="card-body">
-        <?php if (!empty($exito_juego)): ?>
-            <div class="alert alert-success">
-                <i class="bi bi-check-circle"></i> <?= htmlspecialchars($exito_juego) ?>
+
+        <!-- Selector de partido activo -->
+        <form method="GET" class="d-flex gap-2 align-items-end mb-4">
+            <div class="flex-grow-1" style="max-width:360px">
+                <label class="form-label text-white small">Seleccionar partido</label>
+                <select name="partido" class="form-select bg-dark text-white border-secondary"
+                        onchange="this.form.submit()">
+                    <option value="">-- Seleccionar partido --</option>
+                    <?php
+                    mysqli_data_seek($res_todos, 0);
+                    while ($pt = mysqli_fetch_assoc($res_todos)):
+                    ?>
+                        <option value="<?= $pt['id_partido'] ?>"
+                                <?= $id_partido_activo == $pt['id_partido'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($pt['tag1']) ?> vs <?= htmlspecialchars($pt['tag2']) ?>
+                            <?= $pt['fecha_hora'] ? ' (' . date('d/m/Y', strtotime($pt['fecha_hora'])) . ')' : '' ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
             </div>
+        </form>
+
+        <?php if ($partido_activo): ?>
+
+        <!-- Marcador acumulado y juegos existentes -->
+        <?php
+        $wins1 = $wins2 = 0;
+        foreach ($juegos_existentes as $j) {
+            if ($j['goles_equipo1'] > $j['goles_equipo2']) $wins1++;
+            elseif ($j['goles_equipo2'] > $j['goles_equipo1']) $wins2++;
+        }
+        ?>
+        <div class="d-flex align-items-center justify-content-center gap-4 mb-4 py-3
+                    border border-secondary rounded" style="background:#12122a">
+            <div class="text-center">
+                <div class="fw-bold text-white"><?= htmlspecialchars($partido_activo['tag1']) ?></div>
+                <div class="display-5 fw-bold text-accent"><?= $wins1 ?></div>
+            </div>
+            <div class="text-muted">
+                <span class="badge bg-secondary"><?= htmlspecialchars($partido_activo['formato']) ?></span>
+            </div>
+            <div class="text-center">
+                <div class="fw-bold text-white"><?= htmlspecialchars($partido_activo['tag2']) ?></div>
+                <div class="display-5 fw-bold text-accent"><?= $wins2 ?></div>
+            </div>
+        </div>
+
+        <?php if (!empty($juegos_existentes)): ?>
+        <table class="table table-dark table-sm mb-4">
+            <thead>
+                <tr>
+                    <th class="text-center">Juego</th>
+                    <th class="text-center"><?= htmlspecialchars($partido_activo['equipo1']) ?></th>
+                    <th class="text-center">–</th>
+                    <th class="text-center"><?= htmlspecialchars($partido_activo['equipo2']) ?></th>
+                    <th class="text-center">Duración</th>
+                    <th class="text-center">Ganador</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($juegos_existentes as $j): ?>
+            <tr>
+                <td class="text-center text-muted">G<?= $j['numero_juego'] ?></td>
+                <td class="text-center <?= $j['goles_equipo1'] > $j['goles_equipo2'] ? 'text-success fw-bold' : '' ?>">
+                    <?= $j['goles_equipo1'] ?>
+                </td>
+                <td class="text-center text-muted">–</td>
+                <td class="text-center <?= $j['goles_equipo2'] > $j['goles_equipo1'] ? 'text-success fw-bold' : '' ?>">
+                    <?= $j['goles_equipo2'] ?>
+                </td>
+                <td class="text-center text-muted small">
+                    <?php
+                    $s = intval($j['duracion_segundos']);
+                    printf('%d:%02d', intdiv($s, 60), $s % 60);
+                    ?>
+                </td>
+                <td class="text-center">
+                    <?php if ($j['goles_equipo1'] > $j['goles_equipo2']): ?>
+                        <span class="badge bg-success"><?= htmlspecialchars($partido_activo['tag1']) ?></span>
+                    <?php elseif ($j['goles_equipo2'] > $j['goles_equipo1']): ?>
+                        <span class="badge bg-success"><?= htmlspecialchars($partido_activo['tag2']) ?></span>
+                    <?php else: ?>
+                        <span class="badge bg-secondary">Empate OT</span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
         <?php endif; ?>
 
+        <!-- Formulario añadir juego -->
         <form method="POST">
             <input type="hidden" name="accion" value="juego">
-            <div class="row">
-                <!-- Seleccionar partido -->
-                <div class="col-md-3 mb-3">
-                    <label for="id_partido_juego" class="form-label text-white">Partido *</label>
-                    <select class="form-select bg-dark text-white border-secondary"
-                            id="id_partido_juego" name="id_partido_juego" required>
-                        <option value="">-- Seleccionar --</option>
-                        <?php
-                        mysqli_data_seek($res_todos, 0);
-                        while ($pt = mysqli_fetch_assoc($res_todos)):
-                        ?>
-                            <option value="<?= $pt['id_partido'] ?>">
-                                <?= htmlspecialchars($pt['tag1']) ?> vs <?= htmlspecialchars($pt['tag2']) ?>
-                                <?= $pt['fecha_hora'] ? ' (' . date('d/m', strtotime($pt['fecha_hora'])) . ')' : '' ?>
-                            </option>
-                        <?php endwhile; ?>
-                    </select>
+            <input type="hidden" name="id_partido_juego" value="<?= $id_partido_activo ?>">
+            <div class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label text-white small">Nº Juego</label>
+                    <input type="number" class="form-control form-control-sm bg-dark text-white border-secondary"
+                           name="numero_juego" min="1" value="<?= $siguiente_juego ?>"
+                           style="width:80px" required>
                 </div>
-                <!-- Número de juego -->
-                <div class="col-md-2 mb-3">
-                    <label for="numero_juego" class="form-label text-white">Nº Juego</label>
-                    <input type="number" class="form-control bg-dark text-white border-secondary"
-                           id="numero_juego" name="numero_juego" min="1" value="1" required>
+                <div class="col-auto">
+                    <label class="form-label text-white small">
+                        <?= htmlspecialchars($partido_activo['tag1']) ?> goles
+                    </label>
+                    <input type="number" class="form-control form-control-sm bg-dark text-white border-secondary"
+                           name="goles_equipo1" min="0" value="0" style="width:80px" required>
                 </div>
-                <!-- Goles equipo 1 -->
-                <div class="col-md-2 mb-3">
-                    <label for="goles_equipo1" class="form-label text-white">Goles Eq.1</label>
-                    <input type="number" class="form-control bg-dark text-white border-secondary"
-                           id="goles_equipo1" name="goles_equipo1" min="0" value="0" required>
+                <div class="col-auto d-flex align-items-end pb-1">
+                    <span class="text-muted fw-bold">–</span>
                 </div>
-                <!-- Goles equipo 2 -->
-                <div class="col-md-2 mb-3">
-                    <label for="goles_equipo2" class="form-label text-white">Goles Eq.2</label>
-                    <input type="number" class="form-control bg-dark text-white border-secondary"
-                           id="goles_equipo2" name="goles_equipo2" min="0" value="0" required>
+                <div class="col-auto">
+                    <label class="form-label text-white small">
+                        <?= htmlspecialchars($partido_activo['tag2']) ?> goles
+                    </label>
+                    <input type="number" class="form-control form-control-sm bg-dark text-white border-secondary"
+                           name="goles_equipo2" min="0" value="0" style="width:80px" required>
                 </div>
-                <!-- Duración -->
-                <div class="col-md-2 mb-3">
-                    <label for="duracion" class="form-label text-white">Duración (seg)</label>
-                    <input type="number" class="form-control bg-dark text-white border-secondary"
-                           id="duracion" name="duracion" min="0" value="300" required>
+                <div class="col-auto">
+                    <label class="form-label text-white small">Duración (seg)</label>
+                    <input type="number" class="form-control form-control-sm bg-dark text-white border-secondary"
+                           name="duracion" min="0" value="300" style="width:100px" required>
                 </div>
-                <!-- Botón -->
-                <div class="col-md-1 mb-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-accent w-100" title="Añadir juego">
-                        <i class="bi bi-plus"></i>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-accent btn-sm">
+                        <i class="bi bi-plus-circle"></i> Añadir juego
                     </button>
                 </div>
             </div>
         </form>
+
+        <?php else: ?>
+        <p class="text-muted mb-0">
+            <i class="bi bi-info-circle"></i>
+            Selecciona un partido arriba para ver sus juegos y añadir nuevos.
+        </p>
+        <?php endif; ?>
     </div>
 </div>
 

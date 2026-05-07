@@ -16,6 +16,7 @@ if (isset($_SESSION['id_usuario'])) {
 
 // --- Incluir conexión a la BD ---
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/db.php';
 
 $error = '';      // Variable para mensajes de error
 $exito = '';      // Variable para mensajes de éxito (viene del registro)
@@ -28,21 +29,21 @@ if (isset($_SESSION['registro_exito'])) {
 
 // --- Procesar el formulario cuando se envía ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Recoger y limpiar datos del formulario
-    $email = mysqli_real_escape_string($conexion, trim($_POST['email'] ?? ''));
+    $email    = trim($_POST['email']    ?? '');
     $password = trim($_POST['password'] ?? '');
 
     // Validar que los campos no estén vacíos
     if (empty($email) || empty($password)) {
         $error = "Debes rellenar todos los campos.";
     } else {
-        // Buscar el usuario por email
-        $sql = "SELECT id_usuario, nombre, email, password, rol, activo
-                FROM USUARIOS WHERE email = '$email' LIMIT 1";
-        $resultado = mysqli_query($conexion, $sql);
+        // Prepared statement: el email nunca toca la query como string literal
+        $usuario = db_fetch_one($conexion,
+            "SELECT id_usuario, nombre, email, password, rol, activo
+             FROM USUARIOS WHERE email = ? LIMIT 1",
+            "s", $email
+        );
 
-        if ($resultado && mysqli_num_rows($resultado) === 1) {
-            $usuario = mysqli_fetch_assoc($resultado);
+        if ($usuario !== null) {
 
             // Comprobar si la cuenta está activa
             if (!$usuario['activo']) {
