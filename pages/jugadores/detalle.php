@@ -47,6 +47,22 @@ $media_goles = ($stats['total_partidos'] > 0)
     ? round($stats['total_goles'] / $stats['total_partidos'], 2)
     : 0;
 
+// --- Tendencia por partido (últimas 15 actuaciones) ---
+$sql_trend = "SELECT p.fecha_hora, ej.goles, ej.asistencias, ej.salvadas
+              FROM ESTADISTICAS_JUGADOR ej
+              INNER JOIN PARTIDO p ON ej.id_partido = p.id_partido
+              WHERE ej.id_jugador = $id
+              ORDER BY p.fecha_hora ASC
+              LIMIT 15";
+$res_trend = mysqli_query($conexion, $sql_trend);
+$trend_labels = $trend_goles = $trend_asistencias = $trend_salvadas = [];
+while ($row = mysqli_fetch_assoc($res_trend)) {
+    $trend_labels[]     = date('d/m', strtotime($row['fecha_hora']));
+    $trend_goles[]      = (int)$row['goles'];
+    $trend_asistencias[] = (int)$row['asistencias'];
+    $trend_salvadas[]   = (int)$row['salvadas'];
+}
+
 // --- Historial de equipos (ROSTER con fechas) ---
 $sql_historial = "SELECT r.fecha_inicio, r.fecha_fin, r.titular,
                          e.nombre AS equipo, e.tag
@@ -151,6 +167,24 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
+<!-- ========== GRÁFICA DE TENDENCIA ========== -->
+<?php if (!empty($trend_labels)): ?>
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-header bg-dark border-secondary">
+        <h5 class="mb-0 text-accent">
+            <i class="bi bi-graph-up-arrow"></i> Tendencia por Partido
+        </h5>
+    </div>
+    <div class="card-body">
+        <canvas id="chartTendencia" height="100"></canvas>
+    </div>
+</div>
+<?php else: ?>
+<div class="alert alert-secondary mb-4">
+    <i class="bi bi-bar-chart-line"></i> Sin estadísticas registradas para mostrar gráfica.
+</div>
+<?php endif; ?>
+
 <!-- ========== HISTORIAL DE EQUIPOS ========== -->
 <div class="card bg-dark border-secondary mb-4">
     <div class="card-header bg-dark border-secondary">
@@ -208,4 +242,64 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
+<?php if (!empty($trend_labels)): ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    const ctx = document.getElementById('chartTendencia');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: <?= json_encode($trend_labels) ?>,
+            datasets: [
+                {
+                    label: 'Goles',
+                    data: <?= json_encode($trend_goles) ?>,
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'rgba(0,212,255,0.15)',
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 4
+                },
+                {
+                    label: 'Asistencias',
+                    data: <?= json_encode($trend_asistencias) ?>,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13,110,253,0.1)',
+                    tension: 0.3,
+                    fill: false,
+                    pointRadius: 4
+                },
+                {
+                    label: 'Salvadas',
+                    data: <?= json_encode($trend_salvadas) ?>,
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25,135,84,0.1)',
+                    tension: 0.3,
+                    fill: false,
+                    pointRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#adb5bd' } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#adb5bd' },
+                    grid: { color: 'rgba(255,255,255,0.07)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#adb5bd', stepSize: 1 },
+                    grid: { color: 'rgba(255,255,255,0.07)' }
+                }
+            }
+        }
+    });
+})();
+</script>
+<?php endif; ?>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
