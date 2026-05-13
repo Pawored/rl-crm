@@ -12,6 +12,7 @@
 -- 7. Participación (depende de Torneo + Equipo)
 -- 8. Puntos RLCS (depende de Equipo + Temporada)
 -- 9. Usuarios (independiente)
+-- 10. Partidos + Juegos + Estadísticas (depende de Torneo + Equipo + Jugador)
 --
 -- NOTA: El archivo crear_usuarios.sql crea la tabla
 -- USUARIOS e inserta el admin por defecto.
@@ -27,3 +28,4 @@ SOURCE 02_inserts/06_torneos.sql;
 SOURCE 02_inserts/07_participacion.sql;
 SOURCE 02_inserts/08_puntos_rlcs.sql;
 SOURCE 02_inserts/09_usuarios.sql;
+SOURCE 02_inserts/10_partidos.sql;
