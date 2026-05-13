@@ -91,6 +91,48 @@ body > .container-fluid {
     border-color: var(--color-accent) !important;
 }
 
+/* Clase de fondo estándar de tarjeta (fix: solo existía como variable CSS) */
+.bg-card {
+    background-color: var(--bg-card) !important;
+    color: #e2e8f0 !important;
+}
+
+/* ============================================
+   DROPDOWN MENU (Admin y otros)
+   ============================================ */
+.dropdown-menu.bg-card,
+.dropdown-menu.dropdown-menu-dark.bg-card {
+    background-color: #12122a !important;
+    border: 1px solid rgba(0, 212, 255, 0.2) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.dropdown-menu.bg-card .dropdown-item {
+    color: #c8d6e5 !important;
+    transition: background-color 0.15s, color 0.15s;
+}
+.dropdown-menu.bg-card .dropdown-item:hover,
+.dropdown-menu.bg-card .dropdown-item:focus {
+    background-color: rgba(0, 212, 255, 0.12) !important;
+    color: var(--color-accent) !important;
+}
+.dropdown-menu.bg-card .dropdown-item i {
+    opacity: 0.7;
+}
+.dropdown-menu.bg-card .dropdown-item:hover i,
+.dropdown-menu.bg-card .dropdown-item:focus i {
+    opacity: 1;
+}
+.dropdown-menu.bg-card .dropdown-header {
+    color: #5a7090 !important;
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding-top: 0.6rem;
+}
+.dropdown-menu.bg-card .dropdown-divider {
+    border-color: rgba(255,255,255,0.06) !important;
+}
+
 /* ============================================
    NAVBAR
    ============================================ */
@@ -418,3 +460,86 @@ a.text-accent:hover {
 .table tbody tr td a {
     transition: color 0.2s ease;
 }
+
+/* ============================================
+   KPI CARDS (Panel Admin)
+   ============================================ */
+.kpi-card {
+    background: linear-gradient(145deg, #1e1e3a, var(--bg-card)) !important;
+    border: 1px solid var(--border-color) !important;
+    border-top: 3px solid var(--kpi-color, var(--color-accent)) !important;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+.kpi-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top, rgba(255,255,255,0.04) 0%, transparent 70%);
+    pointer-events: none;
+}
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px var(--kpi-color, var(--color-accent));
+    border-color: var(--kpi-color, var(--color-accent)) !important;
+}
+.kpi-card .kpi-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+}
+.kpi-card .kpi-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.65;
+    margin-top: 4px;
+}
+
+/* ============================================
+   MODULE CARDS (Panel Admin)
+   ============================================ */
+.admin-module-card {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+}
+.admin-module-card:hover {
+    border-color: var(--color-accent) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.12);
+}
+.admin-module-card .module-icon-wrap {
+    width: 46px;
+    height: 46px;
+    background: rgba(0, 212, 255, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.admin-module-card:hover .module-icon-wrap {
+    background: rgba(0, 212, 255, 0.2);
+}
+
+/* ============================================
+   SKELETON LOADING
+   ============================================ */
+@keyframes skeleton-shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+}
+.skeleton-row td {
+    background: linear-gradient(90deg, #1a1a2e 25%, #252550 50%, #1a1a2e 75%) !important;
+    background-size: 200% 100% !important;
+    animation: skeleton-shimmer 1.4s ease infinite;
+    color: transparent !important;
+    border-radius: 4px;
+    pointer-events: none;
+    user-select: none;
+}
+.skeleton-row td * { visibility: hidden; }

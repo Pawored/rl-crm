@@ -62,20 +62,20 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="row g-3 mb-5">
     <?php
     $kpis = [
-        ['label' => 'Equipos',            'value' => $stats['equipos'],    'icon' => 'people-fill',    'color' => 'text-accent'],
-        ['label' => 'Jugadores',          'value' => $stats['jugadores'],  'icon' => 'person-badge',   'color' => 'text-accent'],
-        ['label' => 'Torneos',            'value' => $stats['torneos'],    'icon' => 'award',          'color' => 'text-warning'],
-        ['label' => 'Temporadas',         'value' => $stats['temporadas'], 'icon' => 'calendar3',      'color' => 'text-warning'],
-        ['label' => 'Partidos Pendientes','value' => $stats['pendientes'], 'icon' => 'hourglass-split','color' => 'text-danger'],
-        ['label' => 'Usuarios Activos',   'value' => $stats['usuarios'],   'icon' => 'person-gear',    'color' => 'text-success'],
+        ['label' => 'Equipos',            'value' => $stats['equipos'],    'icon' => 'people-fill',    'color' => 'text-accent',   'hex' => '#00d4ff'],
+        ['label' => 'Jugadores',          'value' => $stats['jugadores'],  'icon' => 'person-badge',   'color' => 'text-info',     'hex' => '#0dcaf0'],
+        ['label' => 'Torneos',            'value' => $stats['torneos'],    'icon' => 'award',          'color' => 'text-warning',  'hex' => '#ffc107'],
+        ['label' => 'Temporadas',         'value' => $stats['temporadas'], 'icon' => 'calendar3',      'color' => 'text-warning',  'hex' => '#ff9800'],
+        ['label' => 'Partidos Pendientes','value' => $stats['pendientes'], 'icon' => 'hourglass-split','color' => 'text-danger',   'hex' => '#dc3545'],
+        ['label' => 'Usuarios Activos',   'value' => $stats['usuarios'],   'icon' => 'person-gear',    'color' => 'text-success',  'hex' => '#198754'],
     ];
     foreach ($kpis as $kpi): ?>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card bg-card border-secondary h-100 text-center">
-            <div class="card-body py-3">
-                <i class="bi bi-<?= $kpi['icon'] ?> fs-2 <?= $kpi['color'] ?>"></i>
-                <div class="fs-3 fw-bold text-white mt-1"><?= $kpi['value'] ?></div>
-                <div class="small text-muted"><?= $kpi['label'] ?></div>
+        <div class="card kpi-card h-100 text-center" style="--kpi-color: <?= $kpi['hex'] ?>">
+            <div class="card-body py-4">
+                <i class="bi bi-<?= $kpi['icon'] ?> fs-1 <?= $kpi['color'] ?> mb-2 d-block"></i>
+                <div class="kpi-value text-white"><?= $kpi['value'] ?></div>
+                <div class="kpi-label text-muted"><?= $kpi['label'] ?></div>
             </div>
         </div>
     </div>
@@ -142,10 +142,11 @@ require_once __DIR__ . '/../../includes/header.php';
     ];
     foreach ($modulos as $m): ?>
     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-        <a href="<?= $m['url'] ?>" class="card bg-card border-secondary text-decoration-none h-100
-                  admin-module-card">
+        <a href="<?= $m['url'] ?>" class="card border-secondary text-decoration-none h-100 admin-module-card">
             <div class="card-body d-flex align-items-center gap-3 py-3">
-                <i class="bi bi-<?= $m['icon'] ?> fs-2 text-accent flex-shrink-0"></i>
+                <div class="module-icon-wrap">
+                    <i class="bi bi-<?= $m['icon'] ?> fs-4 text-accent"></i>
+                </div>
                 <div>
                     <div class="text-white fw-semibold"><?= $m['title'] ?></div>
                     <div class="small text-muted"><?= $m['desc'] ?></div>
@@ -155,11 +156,6 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
     <?php endforeach; ?>
 </div>
-
-<style>
-.admin-module-card { transition: border-color .2s, transform .2s; }
-.admin-module-card:hover { border-color: var(--color-accent) !important; transform: translateY(-2px); }
-</style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
