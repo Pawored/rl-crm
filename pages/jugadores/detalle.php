@@ -72,6 +72,7 @@ $sql_historial = "SELECT r.fecha_inicio, r.fecha_fin, r.titular,
                   ORDER BY r.fecha_inicio DESC";
 $res_historial = mysqli_query($conexion, $sql_historial);
 
+$page_title = htmlspecialchars($jugador['nickname']);
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -79,24 +80,35 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="card bg-dark border-secondary mb-4">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h2 class="text-white mb-1">
-                    <i class="bi bi-person-badge"></i>
-                    <?= htmlspecialchars($jugador['nickname']) ?>
-                </h2>
-                <p class="text-muted mb-0">
-                    <strong>Nombre real:</strong>
-                    <?= htmlspecialchars($jugador['nombre_real'] ?? 'No disponible') ?>
-                    &nbsp;|&nbsp;
-                    <i class="bi bi-geo-alt"></i>
-                    <strong>País:</strong> <?= htmlspecialchars($jugador['pais'] ?? 'N/A') ?>
-                    &nbsp;|&nbsp;
-                    <i class="bi bi-calendar"></i>
-                    <strong>Nacimiento:</strong>
-                    <?= $jugador['fecha_nacimiento']
-                        ? date('d/m/Y', strtotime($jugador['fecha_nacimiento']))
-                        : 'N/A' ?>
-                </p>
+            <div class="d-flex align-items-center gap-3">
+                <?php if (!empty($jugador['foto_url'])): ?>
+                <img src="<?= htmlspecialchars($jugador['foto_url']) ?>"
+                     alt="<?= htmlspecialchars($jugador['nickname']) ?>"
+                     style="width:64px;height:64px;object-fit:cover;border-radius:50%;border:2px solid var(--color-accent);flex-shrink:0"
+                     onerror="this.style.display='none'">
+                <?php else: ?>
+                <div style="width:64px;height:64px;border-radius:50%;background:rgba(0,212,255,0.1);border:2px solid var(--color-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i class="bi bi-person-fill fs-3 text-accent"></i>
+                </div>
+                <?php endif; ?>
+                <div>
+                    <h2 class="text-white mb-1">
+                        <?= htmlspecialchars($jugador['nickname']) ?>
+                    </h2>
+                    <p class="text-muted mb-0">
+                        <strong>Nombre real:</strong>
+                        <?= htmlspecialchars($jugador['nombre_real'] ?? 'No disponible') ?>
+                        &nbsp;|&nbsp;
+                        <i class="bi bi-geo-alt"></i>
+                        <strong>País:</strong> <?= htmlspecialchars($jugador['pais'] ?? 'N/A') ?>
+                        &nbsp;|&nbsp;
+                        <i class="bi bi-calendar"></i>
+                        <strong>Nacimiento:</strong>
+                        <?= $jugador['fecha_nacimiento']
+                            ? date('d/m/Y', strtotime($jugador['fecha_nacimiento']))
+                            : 'N/A' ?>
+                    </p>
+                </div>
             </div>
             <div>
                 <a href="/RLCS/CRM/pages/jugadores/index.php" class="btn btn-outline-secondary me-2">

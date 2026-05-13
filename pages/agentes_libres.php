@@ -26,6 +26,7 @@ $sql = "SELECT j.id_jugador, j.nickname, j.nombre_real, j.pais,
 $res = mysqli_query($conexion, $sql);
 $total = $res ? mysqli_num_rows($res) : 0;
 
+$page_title = 'Agentes Libres';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

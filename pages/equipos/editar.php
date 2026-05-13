@@ -17,7 +17,7 @@ requiereRol(['admin', 'editor']);
 // --- Determinar si es edición o creación ---
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $es_edicion = ($id > 0);
-$equipo = ['nombre' => '', 'tag' => '', 'id_region' => '', 'activo' => 1];
+$equipo = ['nombre' => '', 'tag' => '', 'id_region' => '', 'activo' => 1, 'color_primario' => '#00d4ff', 'logo_url' => ''];
 $error = '';
 
 // --- Si es edición, cargar datos actuales del equipo ---
@@ -31,6 +31,9 @@ if ($es_edicion) {
         header("Location: /RLCS/CRM/pages/equipos/index.php");
         exit();
     }
+    // Valores por defecto si la migración ALTER no se ha ejecutado aún
+    $equipo['color_primario'] = $equipo['color_primario'] ?? '#00d4ff';
+    $equipo['logo_url']       = $equipo['logo_url'] ?? '';
 }
 
 // --- Obtener regiones para el dropdown ---
@@ -39,23 +42,24 @@ $res_regiones = mysqli_query($conexion, $sql_regiones);
 
 // --- Procesar formulario al enviar ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Recoger y limpiar datos
-    $nombre    = mysqli_real_escape_string($conexion, trim($_POST['nombre'] ?? ''));
-    $tag       = mysqli_real_escape_string($conexion, trim($_POST['tag'] ?? ''));
-    $id_region = intval($_POST['id_region'] ?? 0);
-    $activo    = isset($_POST['activo']) ? 1 : 0;
+    $nombre         = mysqli_real_escape_string($conexion, trim($_POST['nombre'] ?? ''));
+    $tag            = mysqli_real_escape_string($conexion, trim($_POST['tag'] ?? ''));
+    $id_region      = intval($_POST['id_region'] ?? 0);
+    $activo         = isset($_POST['activo']) ? 1 : 0;
+    $color_primario = preg_match('/^#[0-9a-fA-F]{6}$/', $_POST['color_primario'] ?? '')
+                      ? $_POST['color_primario'] : '#00d4ff';
+    $logo_url       = mysqli_real_escape_string($conexion, substr(trim($_POST['logo_url'] ?? ''), 0, 500));
 
-    // Validaciones
     if (empty($nombre) || empty($tag)) {
         $error = "El nombre y el tag son obligatorios.";
     } else {
         if ($es_edicion) {
-            // --- UPDATE: actualizar equipo existente ---
             $sql_update = "UPDATE EQUIPO SET
-                           nombre = '$nombre',
-                           tag = '$tag',
+                           nombre = '$nombre', tag = '$tag',
                            id_region = " . ($id_region > 0 ? $id_region : 'NULL') . ",
-                           activo = $activo
+                           activo = $activo,
+                           color_primario = '$color_primario',
+                           logo_url = " . ($logo_url !== '' ? "'$logo_url'" : 'NULL') . "
                            WHERE id_equipo = $id";
 
             if (mysqli_query($conexion, $sql_update)) {
@@ -67,11 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log("Error UPDATE equipo: " . mysqli_error($conexion));
             }
         } else {
-            // --- INSERT: crear nuevo equipo ---
-            $sql_insert = "INSERT INTO EQUIPO (nombre, tag, id_region, activo)
+            $sql_insert = "INSERT INTO EQUIPO (nombre, tag, id_region, activo, color_primario, logo_url)
                            VALUES ('$nombre', '$tag',
                            " . ($id_region > 0 ? $id_region : 'NULL') . ",
-                           $activo)";
+                           $activo, '$color_primario',
+                           " . ($logo_url !== '' ? "'$logo_url'" : 'NULL') . ")";
 
             if (mysqli_query($conexion, $sql_insert)) {
                 $nuevo_id = mysqli_insert_id($conexion);
@@ -85,11 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Si hubo error, mantener los datos en el formulario
-    $equipo['nombre']    = $_POST['nombre'] ?? '';
-    $equipo['tag']       = $_POST['tag'] ?? '';
-    $equipo['id_region'] = $_POST['id_region'] ?? '';
-    $equipo['activo']    = isset($_POST['activo']) ? 1 : 0;
+    $equipo['nombre']         = $_POST['nombre'] ?? '';
+    $equipo['tag']            = $_POST['tag'] ?? '';
+    $equipo['id_region']      = $_POST['id_region'] ?? '';
+    $equipo['activo']         = isset($_POST['activo']) ? 1 : 0;
+    $equipo['color_primario'] = $color_primario;
+    $equipo['logo_url']       = $_POST['logo_url'] ?? '';
 }
 
 require_once __DIR__ . '/../../includes/header.php';
@@ -153,6 +158,24 @@ require_once __DIR__ . '/../../includes/header.php';
                             </option>
                         <?php endwhile; ?>
                     </select>
+                </div>
+            </div>
+
+            <!-- Color + Logo -->
+            <div class="row">
+                <div class="col-md-2 mb-3">
+                    <label for="color_primario" class="form-label text-white">Color del Equipo</label>
+                    <input type="color" class="form-control form-control-color border-secondary w-100"
+                           id="color_primario" name="color_primario"
+                           value="<?= htmlspecialchars($equipo['color_primario'] ?? '#00d4ff') ?>"
+                           style="height:38px;background:#1a1a2e">
+                </div>
+                <div class="col-md-10 mb-3">
+                    <label for="logo_url" class="form-label text-white">URL del Logo</label>
+                    <input type="url" class="form-control bg-dark text-white border-secondary"
+                           id="logo_url" name="logo_url"
+                           value="<?= htmlspecialchars($equipo['logo_url'] ?? '') ?>"
+                           placeholder="https://ejemplo.com/logo.png">
                 </div>
             </div>
 

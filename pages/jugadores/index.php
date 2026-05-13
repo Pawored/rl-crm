@@ -66,6 +66,7 @@ $sql = "SELECT j.id_jugador, j.nickname, j.pais,
         LIMIT $offset, $por_pagina";
 $res_jugadores = mysqli_query($conexion, $sql);
 
+$page_title = 'Jugadores';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 

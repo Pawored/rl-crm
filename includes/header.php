@@ -14,7 +14,8 @@ $carpeta_actual = basename(dirname($_SERVER['PHP_SELF']));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RLCS CRM - Gestión Rocket League</title>
+    <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' | ' : '' ?>RLCS CRM</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%231a1a2e'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%2300d4ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%2300d4ff'/%3E%3C/svg%3E">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -212,22 +213,36 @@ $carpeta_actual = basename(dirname($_SERVER['PHP_SELF']));
     </div>
 </nav>
 
-<!-- ========== CONTENIDO PRINCIPAL ========== -->
-<div class="container-fluid mt-4 px-4">
-    <?php
-    // --- Mostrar mensajes de éxito/error si existen en sesión ---
-    if (isset($_SESSION['mensaje_exito'])): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle"></i> <?= $_SESSION['mensaje_exito'] ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<!-- ========== TOASTS (bottom-right, inicializados desde footer.php) ========== -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1200">
+    <?php if (isset($_SESSION['mensaje_exito'])): ?>
+    <div class="toast align-items-center text-white bg-success border-0"
+         role="alert" data-bs-autohide="true" data-bs-delay="4000">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-check-circle-fill me-1"></i>
+                <?= htmlspecialchars($_SESSION['mensaje_exito']) ?>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast"></button>
         </div>
-        <?php unset($_SESSION['mensaje_exito']); ?>
-    <?php endif; ?>
+    </div>
+    <?php unset($_SESSION['mensaje_exito']); endif; ?>
 
     <?php if (isset($_SESSION['mensaje_error'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> <?= $_SESSION['mensaje_error'] ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="toast align-items-center text-white bg-danger border-0"
+         role="alert" data-bs-autohide="true" data-bs-delay="6000">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <?= htmlspecialchars($_SESSION['mensaje_error']) ?>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast"></button>
         </div>
-        <?php unset($_SESSION['mensaje_error']); ?>
-    <?php endif; ?>
+    </div>
+    <?php unset($_SESSION['mensaje_error']); endif; ?>
+</div>
+
+<!-- ========== CONTENIDO PRINCIPAL ========== -->
+<div class="container-fluid mt-4 px-4">
