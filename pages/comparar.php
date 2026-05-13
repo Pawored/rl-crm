@@ -17,7 +17,7 @@ $id2  = intval($_GET['id2'] ?? 0);
 $todos_equipos  = mysqli_query($conexion,
     "SELECT id_equipo, nombre, tag FROM EQUIPO ORDER BY nombre ASC");
 $todos_jugadores = mysqli_query($conexion,
-    "SELECT id_jugador, nickname FROM JUGADOR WHERE activo = 1 ORDER BY nickname ASC");
+    "SELECT id_jugador, nickname FROM JUGADOR ORDER BY nickname ASC");
 
 // === RESULTADO COMPARACIÓN ===
 $entidad1 = $entidad2 = null;
