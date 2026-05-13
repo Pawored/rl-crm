@@ -42,66 +42,59 @@ $res_equipos = mysqli_query($conexion, $sql_equipos);
 // --- Procesar transferencia ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'transferir') {
     $id_equipo_nuevo = intval($_POST['id_equipo_nuevo'] ?? 0);
-    $fecha_transfer  = mysqli_real_escape_string($conexion, $_POST['fecha_transferencia'] ?? date('Y-m-d'));
+    $fecha_transfer  = trim($_POST['fecha_transferencia'] ?? date('Y-m-d'));
 
     if ($id_equipo_nuevo <= 0) {
         $error_transfer = "Debes seleccionar un equipo.";
     } else {
-        // Llamar al procedimiento almacenado de transferencia
-        $sql_transfer = "CALL transferir_jugador($id, $id_equipo_nuevo, '$fecha_transfer')";
-        if (mysqli_query($conexion, $sql_transfer)) {
+        $stmt = mysqli_prepare($conexion, "CALL transferir_jugador(?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'iis', $id, $id_equipo_nuevo, $fecha_transfer);
+        if (mysqli_stmt_execute($stmt)) {
             $_SESSION['mensaje_exito'] = "Jugador transferido correctamente.";
             header("Location: /RLCS/CRM/pages/jugadores/detalle.php?id=$id");
             exit();
         } else {
-            $error_transfer = "Error al transferir: " . mysqli_error($conexion);
+            $error_transfer = "Error al transferir: " . mysqli_stmt_error($stmt);
         }
     }
 }
 
 // --- Procesar formulario de datos del jugador ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['accion']) || $_POST['accion'] === 'guardar')) {
-    $nickname         = mysqli_real_escape_string($conexion, trim($_POST['nickname'] ?? ''));
-    $nombre_real      = mysqli_real_escape_string($conexion, trim($_POST['nombre_real'] ?? ''));
-    $fecha_nacimiento = mysqli_real_escape_string($conexion, trim($_POST['fecha_nacimiento'] ?? ''));
-    $pais             = mysqli_real_escape_string($conexion, trim($_POST['pais'] ?? ''));
-    $foto_url         = mysqli_real_escape_string($conexion, substr(trim($_POST['foto_url'] ?? ''), 0, 500));
+    $nickname         = trim($_POST['nickname'] ?? '');
+    $nombre_real      = trim($_POST['nombre_real'] ?? '');
+    $fecha_nacimiento = trim($_POST['fecha_nacimiento'] ?? '');
+    $pais             = trim($_POST['pais'] ?? '');
+    $fecha_val        = !empty($fecha_nacimiento) ? $fecha_nacimiento : null;
+    $foto_url_val     = substr(trim($_POST['foto_url'] ?? ''), 0, 500) ?: null;
 
     if (empty($nickname)) {
         $error = "El nickname es obligatorio.";
     } else {
         if ($es_edicion) {
-            $sql_update = "UPDATE JUGADOR SET
-                           nickname = '$nickname',
-                           nombre_real = '$nombre_real',
-                           fecha_nacimiento = " . (!empty($fecha_nacimiento) ? "'$fecha_nacimiento'" : "NULL") . ",
-                           pais = '$pais',
-                           foto_url = " . ($foto_url !== '' ? "'$foto_url'" : 'NULL') . "
-                           WHERE id_jugador = $id";
-
-            if (mysqli_query($conexion, $sql_update)) {
+            $stmt = mysqli_prepare($conexion,
+                "UPDATE JUGADOR SET nickname=?, nombre_real=?, fecha_nacimiento=?, pais=?, foto_url=? WHERE id_jugador=?");
+            mysqli_stmt_bind_param($stmt, 'sssssi', $nickname, $nombre_real, $fecha_val, $pais, $foto_url_val, $id);
+            if (mysqli_stmt_execute($stmt)) {
                 $_SESSION['mensaje_exito'] = "Jugador actualizado correctamente.";
                 header("Location: /RLCS/CRM/pages/jugadores/detalle.php?id=$id");
                 exit();
             } else {
                 $error = "Error al actualizar el jugador.";
-                error_log("Error UPDATE jugador: " . mysqli_error($conexion));
+                error_log("Error UPDATE jugador: " . mysqli_stmt_error($stmt));
             }
         } else {
-            $sql_insert = "INSERT INTO JUGADOR (nickname, nombre_real, fecha_nacimiento, pais, foto_url)
-                           VALUES ('$nickname', '$nombre_real',
-                           " . (!empty($fecha_nacimiento) ? "'$fecha_nacimiento'" : "NULL") . ",
-                           '$pais',
-                           " . ($foto_url !== '' ? "'$foto_url'" : 'NULL') . ")";
-
-            if (mysqli_query($conexion, $sql_insert)) {
+            $stmt = mysqli_prepare($conexion,
+                "INSERT INTO JUGADOR (nickname, nombre_real, fecha_nacimiento, pais, foto_url) VALUES (?,?,?,?,?)");
+            mysqli_stmt_bind_param($stmt, 'sssss', $nickname, $nombre_real, $fecha_val, $pais, $foto_url_val);
+            if (mysqli_stmt_execute($stmt)) {
                 $nuevo_id = mysqli_insert_id($conexion);
                 $_SESSION['mensaje_exito'] = "Jugador creado correctamente.";
                 header("Location: /RLCS/CRM/pages/jugadores/detalle.php?id=$nuevo_id");
                 exit();
             } else {
                 $error = "Error al crear el jugador.";
-                error_log("Error INSERT jugador: " . mysqli_error($conexion));
+                error_log("Error INSERT jugador: " . mysqli_stmt_error($stmt));
             }
         }
     }

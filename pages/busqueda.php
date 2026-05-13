@@ -13,7 +13,6 @@ require_once __DIR__ . '/../includes/sesion.php';
 
 // --- Recoger término de búsqueda ---
 $q = isset($_GET['q']) ? trim($_GET['q']) : '';
-$q_safe = mysqli_real_escape_string($conexion, $q);
 
 $equipos = [];
 $jugadores = [];
@@ -21,55 +20,54 @@ $torneos = [];
 
 // --- Solo buscar si hay término ---
 if (strlen($q) >= 2) {
+    $q_like = '%' . $q . '%';
+
     // Buscar en EQUIPOS (por nombre o tag)
-    $sql_equipos = "SELECT e.id_equipo, e.nombre, e.tag, e.activo,
-                           r.nombre AS region
-                    FROM EQUIPO e
-                    LEFT JOIN REGION r ON e.id_region = r.id_region
-                    WHERE e.nombre LIKE '%$q_safe%' OR e.tag LIKE '%$q_safe%'
-                    ORDER BY e.nombre ASC
-                    LIMIT 20";
-    $res_eq = mysqli_query($conexion, $sql_equipos);
+    $stmt = mysqli_prepare($conexion,
+        "SELECT e.id_equipo, e.nombre, e.tag, e.activo, r.nombre AS region
+         FROM EQUIPO e LEFT JOIN REGION r ON e.id_region = r.id_region
+         WHERE e.nombre LIKE ? OR e.tag LIKE ?
+         ORDER BY e.nombre ASC LIMIT 20");
+    mysqli_stmt_bind_param($stmt, 'ss', $q_like, $q_like);
+    mysqli_stmt_execute($stmt);
+    $res_eq = mysqli_stmt_get_result($stmt);
     if ($res_eq) {
-        while ($fila = mysqli_fetch_assoc($res_eq)) {
-            $equipos[] = $fila;
-        }
+        while ($fila = mysqli_fetch_assoc($res_eq)) $equipos[] = $fila;
     }
 
     // Buscar en JUGADORES (por nickname o nombre_real)
-    $sql_jugadores = "SELECT j.id_jugador, j.nickname, j.nombre_real, j.pais,
-                             eq.nombre AS equipo, eq.tag AS tag_equipo
-                      FROM JUGADOR j
-                      LEFT JOIN ROSTER ro ON j.id_jugador = ro.id_jugador AND ro.fecha_fin IS NULL
-                      LEFT JOIN EQUIPO eq ON ro.id_equipo = eq.id_equipo
-                      WHERE j.nickname LIKE '%$q_safe%' OR j.nombre_real LIKE '%$q_safe%'
-                      ORDER BY j.nickname ASC
-                      LIMIT 20";
-    $res_jug = mysqli_query($conexion, $sql_jugadores);
+    $stmt = mysqli_prepare($conexion,
+        "SELECT j.id_jugador, j.nickname, j.nombre_real, j.pais,
+                eq.nombre AS equipo, eq.tag AS tag_equipo
+         FROM JUGADOR j
+         LEFT JOIN ROSTER ro ON j.id_jugador = ro.id_jugador AND ro.fecha_fin IS NULL
+         LEFT JOIN EQUIPO eq ON ro.id_equipo = eq.id_equipo
+         WHERE j.nickname LIKE ? OR j.nombre_real LIKE ?
+         ORDER BY j.nickname ASC LIMIT 20");
+    mysqli_stmt_bind_param($stmt, 'ss', $q_like, $q_like);
+    mysqli_stmt_execute($stmt);
+    $res_jug = mysqli_stmt_get_result($stmt);
     if ($res_jug) {
-        while ($fila = mysqli_fetch_assoc($res_jug)) {
-            $jugadores[] = $fila;
-        }
+        while ($fila = mysqli_fetch_assoc($res_jug)) $jugadores[] = $fila;
     }
 
     // Buscar en TORNEOS (por nombre)
-    $sql_torneos = "SELECT t.id_torneo, t.nombre, t.tipo, t.prize_pool,
-                           te.anio AS temporada
-                    FROM TORNEO t
-                    LEFT JOIN TEMPORADA te ON t.id_temporada = te.id_temporada
-                    WHERE t.nombre LIKE '%$q_safe%'
-                    ORDER BY te.anio DESC, t.nombre ASC
-                    LIMIT 20";
-    $res_tor = mysqli_query($conexion, $sql_torneos);
+    $stmt = mysqli_prepare($conexion,
+        "SELECT t.id_torneo, t.nombre, t.tipo, t.prize_pool, te.anio AS temporada
+         FROM TORNEO t LEFT JOIN TEMPORADA te ON t.id_temporada = te.id_temporada
+         WHERE t.nombre LIKE ?
+         ORDER BY te.anio DESC, t.nombre ASC LIMIT 20");
+    mysqli_stmt_bind_param($stmt, 's', $q_like);
+    mysqli_stmt_execute($stmt);
+    $res_tor = mysqli_stmt_get_result($stmt);
     if ($res_tor) {
-        while ($fila = mysqli_fetch_assoc($res_tor)) {
-            $torneos[] = $fila;
-        }
+        while ($fila = mysqli_fetch_assoc($res_tor)) $torneos[] = $fila;
     }
 }
 
 $total_resultados = count($equipos) + count($jugadores) + count($torneos);
 
+$page_title = $q !== '' ? 'Búsqueda: ' . htmlspecialchars($q) : 'Búsqueda';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

@@ -39,9 +39,14 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <?php if ($total === 0): ?>
-<div class="alert alert-info">
-    <i class="bi bi-check-circle"></i>
-    No hay jugadores activos sin equipo en este momento. Todos tienen un roster activo asignado.
+<div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+        <i class="bi bi-check-circle"></i>
+        Todos los jugadores tienen un roster activo asignado en este momento.
+    </div>
+    <a href="/RLCS/CRM/pages/jugadores/index.php" class="btn btn-sm btn-outline-info">
+        <i class="bi bi-people"></i> Ver todos los jugadores
+    </a>
 </div>
 <?php else: ?>
 
