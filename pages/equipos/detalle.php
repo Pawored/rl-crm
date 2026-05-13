@@ -66,30 +66,41 @@ $chart_regionals  = array_column(array_reverse($puntos_arr), 'puntos_regionals')
 $chart_majors     = array_column(array_reverse($puntos_arr), 'puntos_majors');
 $chart_totales    = array_column(array_reverse($puntos_arr), 'puntos_totales');
 
+$page_title = htmlspecialchars($equipo['nombre']);
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <!-- ========== CABECERA DEL EQUIPO ========== -->
-<div class="card bg-dark border-secondary mb-4">
+<?php $color = htmlspecialchars($equipo['color_primario'] ?? '#00d4ff'); ?>
+<div class="card bg-dark border-secondary mb-4"
+     style="border-top: 4px solid <?= $color ?> !important">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h2 class="text-white mb-1">
-                    <?= htmlspecialchars($equipo['nombre']) ?>
-                    <span class="badge bg-secondary fs-6"><?= htmlspecialchars($equipo['tag']) ?></span>
-                </h2>
-                <p class="text-muted mb-0">
-                    <i class="bi bi-geo-alt"></i>
-                    Región: <strong><?= htmlspecialchars($equipo['region'] ?? 'Sin región') ?></strong>
-                    (<?= htmlspecialchars($equipo['region_siglas'] ?? '') ?>)
-                    &nbsp;|&nbsp;
-                    Estado:
-                    <?php if ($equipo['activo']): ?>
-                        <span class="badge bg-success">Activo</span>
-                    <?php else: ?>
-                        <span class="badge bg-danger">Inactivo</span>
-                    <?php endif; ?>
-                </p>
+            <div class="d-flex align-items-center gap-3">
+                <?php if (!empty($equipo['logo_url'])): ?>
+                <img src="<?= htmlspecialchars($equipo['logo_url']) ?>"
+                     alt="Logo <?= htmlspecialchars($equipo['nombre']) ?>"
+                     style="width:64px;height:64px;object-fit:contain;flex-shrink:0"
+                     onerror="this.style.display='none'">
+                <?php endif; ?>
+                <div>
+                    <h2 class="text-white mb-1">
+                        <?= htmlspecialchars($equipo['nombre']) ?>
+                        <span class="badge bg-secondary fs-6"><?= htmlspecialchars($equipo['tag']) ?></span>
+                    </h2>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-geo-alt"></i>
+                        Región: <strong><?= htmlspecialchars($equipo['region'] ?? 'Sin región') ?></strong>
+                        (<?= htmlspecialchars($equipo['region_siglas'] ?? '') ?>)
+                        &nbsp;|&nbsp;
+                        Estado:
+                        <?php if ($equipo['activo']): ?>
+                            <span class="badge bg-success">Activo</span>
+                        <?php else: ?>
+                            <span class="badge bg-danger">Inactivo</span>
+                        <?php endif; ?>
+                    </p>
+                </div>
             </div>
             <div>
                 <a href="/RLCS/CRM/pages/equipos/index.php" class="btn btn-outline-secondary me-2">

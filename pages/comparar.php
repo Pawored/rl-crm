@@ -74,6 +74,7 @@ if ($id1 > 0 && $id2 > 0 && $id1 !== $id2) {
     }
 }
 
+$page_title = 'Comparar H2H';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

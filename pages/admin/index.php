@@ -49,6 +49,7 @@ while ($row = mysqli_fetch_assoc($res_top)) {
     $chart_equipos_pts[]   = (int)$row['puntos_totales'];
 }
 
+$page_title = 'Panel Admin';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 

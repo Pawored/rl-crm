@@ -17,7 +17,7 @@ requiereRol(['admin', 'editor']);
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $es_edicion = ($id > 0);
-$jugador = ['nickname' => '', 'nombre_real' => '', 'fecha_nacimiento' => '', 'pais' => ''];
+$jugador = ['nickname' => '', 'nombre_real' => '', 'fecha_nacimiento' => '', 'pais' => '', 'foto_url' => ''];
 $error = '';
 $error_transfer = '';
 
@@ -32,6 +32,7 @@ if ($es_edicion) {
         header("Location: /RLCS/CRM/pages/jugadores/index.php");
         exit();
     }
+    $jugador['foto_url'] = $jugador['foto_url'] ?? '';
 }
 
 // --- Obtener equipos activos para el dropdown de transferencia ---
@@ -64,17 +65,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['accion']) || $_POST
     $nombre_real      = mysqli_real_escape_string($conexion, trim($_POST['nombre_real'] ?? ''));
     $fecha_nacimiento = mysqli_real_escape_string($conexion, trim($_POST['fecha_nacimiento'] ?? ''));
     $pais             = mysqli_real_escape_string($conexion, trim($_POST['pais'] ?? ''));
+    $foto_url         = mysqli_real_escape_string($conexion, substr(trim($_POST['foto_url'] ?? ''), 0, 500));
 
     if (empty($nickname)) {
         $error = "El nickname es obligatorio.";
     } else {
         if ($es_edicion) {
-            // --- UPDATE ---
             $sql_update = "UPDATE JUGADOR SET
                            nickname = '$nickname',
                            nombre_real = '$nombre_real',
                            fecha_nacimiento = " . (!empty($fecha_nacimiento) ? "'$fecha_nacimiento'" : "NULL") . ",
-                           pais = '$pais'
+                           pais = '$pais',
+                           foto_url = " . ($foto_url !== '' ? "'$foto_url'" : 'NULL') . "
                            WHERE id_jugador = $id";
 
             if (mysqli_query($conexion, $sql_update)) {
@@ -86,11 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['accion']) || $_POST
                 error_log("Error UPDATE jugador: " . mysqli_error($conexion));
             }
         } else {
-            // --- INSERT ---
-            $sql_insert = "INSERT INTO JUGADOR (nickname, nombre_real, fecha_nacimiento, pais)
+            $sql_insert = "INSERT INTO JUGADOR (nickname, nombre_real, fecha_nacimiento, pais, foto_url)
                            VALUES ('$nickname', '$nombre_real',
                            " . (!empty($fecha_nacimiento) ? "'$fecha_nacimiento'" : "NULL") . ",
-                           '$pais')";
+                           '$pais',
+                           " . ($foto_url !== '' ? "'$foto_url'" : 'NULL') . ")";
 
             if (mysqli_query($conexion, $sql_insert)) {
                 $nuevo_id = mysqli_insert_id($conexion);
@@ -104,11 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['accion']) || $_POST
         }
     }
 
-    // Mantener datos si hay error
     $jugador['nickname']         = $_POST['nickname'] ?? '';
     $jugador['nombre_real']      = $_POST['nombre_real'] ?? '';
     $jugador['fecha_nacimiento'] = $_POST['fecha_nacimiento'] ?? '';
     $jugador['pais']             = $_POST['pais'] ?? '';
+    $jugador['foto_url']         = $_POST['foto_url'] ?? '';
 }
 
 require_once __DIR__ . '/../../includes/header.php';
@@ -169,6 +171,13 @@ require_once __DIR__ . '/../../includes/header.php';
                            value="<?= htmlspecialchars($jugador['pais'] ?? '') ?>"
                            placeholder="Ej: Escocia">
                 </div>
+            </div>
+            <div class="mb-3">
+                <label for="foto_url" class="form-label text-white">URL Foto</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary"
+                       id="foto_url" name="foto_url"
+                       value="<?= htmlspecialchars($jugador['foto_url'] ?? '') ?>"
+                       placeholder="https://ejemplo.com/foto.jpg">
             </div>
 
             <button type="submit" class="btn btn-accent">

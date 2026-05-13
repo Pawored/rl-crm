@@ -53,6 +53,7 @@ $sql = "SELECT t.id_torneo, t.nombre, t.tipo, t.prize_pool,
         LIMIT $offset, $por_pagina";
 $res_torneos = mysqli_query($conexion, $sql);
 
+$page_title = 'Torneos';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 

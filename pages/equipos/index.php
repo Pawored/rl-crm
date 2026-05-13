@@ -84,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminar_id']) && tie
     exit();
 }
 
+$page_title = 'Equipos';
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
