@@ -42,49 +42,41 @@ $res_regiones = mysqli_query($conexion, $sql_regiones);
 
 // --- Procesar formulario al enviar ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre         = mysqli_real_escape_string($conexion, trim($_POST['nombre'] ?? ''));
-    $tag            = mysqli_real_escape_string($conexion, trim($_POST['tag'] ?? ''));
-    $id_region      = intval($_POST['id_region'] ?? 0);
+    $nombre         = trim($_POST['nombre'] ?? '');
+    $tag            = trim($_POST['tag'] ?? '');
+    $id_region_val  = intval($_POST['id_region'] ?? 0) ?: null;
     $activo         = isset($_POST['activo']) ? 1 : 0;
     $color_primario = preg_match('/^#[0-9a-fA-F]{6}$/', $_POST['color_primario'] ?? '')
                       ? $_POST['color_primario'] : '#00d4ff';
-    $logo_url       = mysqli_real_escape_string($conexion, substr(trim($_POST['logo_url'] ?? ''), 0, 500));
+    $logo_url_val   = substr(trim($_POST['logo_url'] ?? ''), 0, 500) ?: null;
 
     if (empty($nombre) || empty($tag)) {
         $error = "El nombre y el tag son obligatorios.";
     } else {
         if ($es_edicion) {
-            $sql_update = "UPDATE EQUIPO SET
-                           nombre = '$nombre', tag = '$tag',
-                           id_region = " . ($id_region > 0 ? $id_region : 'NULL') . ",
-                           activo = $activo,
-                           color_primario = '$color_primario',
-                           logo_url = " . ($logo_url !== '' ? "'$logo_url'" : 'NULL') . "
-                           WHERE id_equipo = $id";
-
-            if (mysqli_query($conexion, $sql_update)) {
+            $stmt = mysqli_prepare($conexion,
+                "UPDATE EQUIPO SET nombre=?, tag=?, id_region=?, activo=?, color_primario=?, logo_url=? WHERE id_equipo=?");
+            mysqli_stmt_bind_param($stmt, 'ssiissi', $nombre, $tag, $id_region_val, $activo, $color_primario, $logo_url_val, $id);
+            if (mysqli_stmt_execute($stmt)) {
                 $_SESSION['mensaje_exito'] = "Equipo actualizado correctamente.";
                 header("Location: /RLCS/CRM/pages/equipos/detalle.php?id=$id");
                 exit();
             } else {
                 $error = "Error al actualizar el equipo.";
-                error_log("Error UPDATE equipo: " . mysqli_error($conexion));
+                error_log("Error UPDATE equipo: " . mysqli_stmt_error($stmt));
             }
         } else {
-            $sql_insert = "INSERT INTO EQUIPO (nombre, tag, id_region, activo, color_primario, logo_url)
-                           VALUES ('$nombre', '$tag',
-                           " . ($id_region > 0 ? $id_region : 'NULL') . ",
-                           $activo, '$color_primario',
-                           " . ($logo_url !== '' ? "'$logo_url'" : 'NULL') . ")";
-
-            if (mysqli_query($conexion, $sql_insert)) {
+            $stmt = mysqli_prepare($conexion,
+                "INSERT INTO EQUIPO (nombre, tag, id_region, activo, color_primario, logo_url) VALUES (?,?,?,?,?,?)");
+            mysqli_stmt_bind_param($stmt, 'ssiiss', $nombre, $tag, $id_region_val, $activo, $color_primario, $logo_url_val);
+            if (mysqli_stmt_execute($stmt)) {
                 $nuevo_id = mysqli_insert_id($conexion);
                 $_SESSION['mensaje_exito'] = "Equipo creado correctamente.";
                 header("Location: /RLCS/CRM/pages/equipos/detalle.php?id=$nuevo_id");
                 exit();
             } else {
                 $error = "Error al crear el equipo.";
-                error_log("Error INSERT equipo: " . mysqli_error($conexion));
+                error_log("Error INSERT equipo: " . mysqli_stmt_error($stmt));
             }
         }
     }
