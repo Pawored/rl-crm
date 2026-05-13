@@ -17,8 +17,7 @@ $sql = "SELECT j.id_jugador, j.nickname, j.nombre_real, j.pais,
             FROM ROSTER
             GROUP BY id_jugador
         ) lr ON j.id_jugador = lr.id_jugador
-        WHERE j.activo = 1
-          AND NOT EXISTS (
+        WHERE NOT EXISTS (
               SELECT 1 FROM ROSTER r
               WHERE r.id_jugador = j.id_jugador AND r.fecha_fin IS NULL
           )
