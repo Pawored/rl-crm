@@ -82,7 +82,7 @@ $sql_ultimos = "SELECT p.id_partido, p.fecha_hora, p.formato,
 $res_ultimos = mysqli_query($conexion, $sql_ultimos);
 
 // --- Incluir header ---
- = 'Dashboard';
+$page_title = 'Dashboard';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
