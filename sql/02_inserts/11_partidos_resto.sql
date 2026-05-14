@@ -478,7 +478,7 @@ INSERT INTO JUEGO (id_partido, numero_juego, goles_equipo1, goles_equipo2, durac
 --             4-2 w→(7,3,8,26,T)(6,2,6,20,F)(5,2,5,14,F) l→(5,3,6,20,F)(4,2,5,16,F)(4,1,4,12,F)
 --             4-3 w→(8,4,10,30,T)(7,3,8,24,F)(6,2,6,18,F) l→(7,4,10,28,F)(7,3,8,22,F)(5,2,6,18,F)
 -- ================================================================
-INSERT INTO ESTADISTICAS_JUGADOR (id_jugador, id_partido, goles, asistencias, paradas, tiros, mvp) VALUES
+INSERT INTO ESTADISTICAS_JUGADOR (id_jugador, id_partido, goles, asistencias, salvadas, tiros, mvp) VALUES
 -- P32 SAM 3-0  w17(49-51) l24(70-72)
 (49,32, 4,2,5,16,TRUE),(50,32, 3,2,4,13,FALSE),(51,32, 2,1,3,9,FALSE),
 (70,32, 2,1,3,10,FALSE),(71,32, 1,1,2,7,FALSE),(72,32, 0,0,2,6,FALSE),
