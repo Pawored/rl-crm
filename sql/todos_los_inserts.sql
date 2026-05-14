@@ -29,3 +29,4 @@ SOURCE 02_inserts/07_participacion.sql;
 SOURCE 02_inserts/08_puntos_rlcs.sql;
 SOURCE 02_inserts/09_usuarios.sql;
 SOURCE 02_inserts/10_partidos.sql;
+SOURCE 02_inserts/11_partidos_resto.sql;
