@@ -1,8 +1,10 @@
-CREATE VIEW vista_rosters_actuales AS
-SELECT 
+CREATE OR REPLACE VIEW vista_rosters_actuales AS
+SELECT
+    e.id_equipo,
     e.nombre AS equipo,
     e.tag,
-    j.nickname AS jugador,
+    j.id_jugador,
+    j.nickname,
     j.pais,
     r.titular,
     r.fecha_inicio

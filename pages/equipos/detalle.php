@@ -32,9 +32,12 @@ if (!$equipo) {
     exit();
 }
 
-// --- Roster actual (vista_rosters_actuales) ---
-$sql_roster = "SELECT * FROM vista_rosters_actuales
-               WHERE id_equipo = $id ORDER BY titular DESC, nickname ASC";
+// --- Roster actual ---
+$sql_roster = "SELECT j.id_jugador, j.nickname, j.pais, ro.titular, ro.fecha_inicio
+               FROM ROSTER ro
+               INNER JOIN JUGADOR j ON j.id_jugador = ro.id_jugador
+               WHERE ro.id_equipo = $id AND ro.fecha_fin IS NULL
+               ORDER BY ro.titular DESC, j.nickname ASC";
 $res_roster = mysqli_query($conexion, $sql_roster);
 
 // --- Historial de torneos (participaciones) ---
