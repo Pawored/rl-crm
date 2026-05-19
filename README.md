@@ -219,7 +219,7 @@ La raíz redirige automáticamente al login si no hay sesión activa, o al dashb
 | Campo | Valor |
 |---|---|
 | Email | `admin@rlcs.com` |
-| Contraseña | `Admin1234!` |
+| Contraseña | `password` |
 | Rol | `admin` |
 
 > Cambia la contraseña del administrador tras el primer acceso.
